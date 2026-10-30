@@ -4,8 +4,12 @@
 import { parseChangelog } from "./changelog.ts";
 import {
   ALL_REFERENCES,
+  CHECK_METHODS,
   CLAIMS,
   EXPERIMENTS,
+  FACTORY,
+  NOT_APPLICABLE,
+  RECORD_METHODS,
   GAPS,
   GUIDE,
   MATURITY,
@@ -59,6 +63,7 @@ export const AUDIT_EVIDENCE: Record<string, string[]> = {
 };
 
 export const SCORES = {
+  "n/a": "The team chose not to use this optional practice, and says so.",
   met: "The practice is in place and you found evidence.",
   partial: "Some of it is in place, or only for some changes.",
   missing: "You looked and found nothing.",
@@ -92,6 +97,7 @@ export function buildGuideJson(changelog: string) {
       thesis: s.thesis,
       lesson: s.lesson,
       guide: GUIDE[s.id],
+      inAFactory: FACTORY[s.id],
       auditEvidence: AUDIT_EVIDENCE[s.id],
       recommendations: RECOMMENDATIONS.filter((r) => r.station === s.id).map((r) => ({
         id: r.id,
@@ -107,6 +113,12 @@ export function buildGuideJson(changelog: string) {
         gap: GAPS[r.id] ?? null,
       })),
     })),
+    setup: {
+      note: "The follow-up check and the map are Viva's own, untested idea. Each can be swapped or left out.",
+      checkMethods: CHECK_METHODS,
+      recordMethods: RECORD_METHODS,
+      notApplicable: NOT_APPLICABLE,
+    },
     claims: CLAIMS,
     tools: TOOLS,
     openGround: OPEN_GROUND,
@@ -130,6 +142,7 @@ export function auditPrompt(version: string): string {
 1. Fetch ${GUIDE_JSON_URL}. It lists eight stations, each with recommendations labelled "Best practice" or "Cutting edge", the tools that meet them, and dated sources.
 2. Work read-only. Do not comment, approve, merge, change settings, or open issues. Never print secret values.
 3. Do not read, score, or report on any individual person. Look at policies, templates, configs and patterns across PRs only.
+   The follow-up check and the map are optional. If the team has chosen not to use them, score those recommendations n/a, not missing. If the team runs agents as a software factory, use each station's inAFactory notes.
 4. Gather evidence station by station:
 ${stations}
    If you lack access to something, score it unknown. Do not guess.
@@ -176,7 +189,7 @@ export function buildLlmsFull(changelog: string): string {
         }${GAPS[r.id] ? `\n  Gap: ${GAPS[r.id]}` : ""}`;
       })
       .join("\n");
-    return `## ${s.index} ${s.name}\n\n${s.thesis}\n\n${s.lesson}\n\nAI: ${GUIDE[s.id].ai}\n\nHuman: ${GUIDE[s.id].human}\n\n${recs}`;
+    return `## ${s.index} ${s.name}\n\n${s.thesis}\n\n${s.lesson}\n\nAI: ${GUIDE[s.id].ai}\n\nHuman: ${GUIDE[s.id].human}\n\nIn a software factory (beside Line's ${FACTORY[s.id].line}; answered by ${FACTORY[s.id].owner}): ${FACTORY[s.id].change}${NOT_APPLICABLE[s.id] ? `\n\nIf the team does not use this station: ${NOT_APPLICABLE[s.id]}` : ""}\n\n${recs}`;
   }).join("\n\n");
   const claims = CLAIMS.map(
     (c) =>

@@ -6,6 +6,7 @@ import { Disclosure } from "@/components/viva/disclosure";
 import { Guide } from "@/components/viva/guide";
 import { Home } from "@/components/viva/home";
 import { Rail } from "@/components/viva/rail";
+import { SetupPanel } from "@/components/viva/setup";
 import { Stage } from "@/components/viva/stage";
 import { useHashRoute } from "@/components/viva/use-hash-route";
 
@@ -80,9 +81,12 @@ export function VivaApp() {
       {view === "home" ? (
         <Home />
       ) : view === "walk" ? (
-        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[16.5rem_minmax(0,1fr)] lg:items-start">
-          <Rail />
-          <Stage />
+        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-4 sm:px-6">
+          <SetupPanel />
+          <div className="grid gap-4 lg:grid-cols-[16.5rem_minmax(0,1fr)] lg:items-start">
+            <Rail />
+            <Stage />
+          </div>
         </div>
       ) : (
         <Guide />

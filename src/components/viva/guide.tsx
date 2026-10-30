@@ -1,6 +1,10 @@
 import { useState } from "react";
 import {
   ADOPTION_STAGES,
+  CHECK_METHODS,
+  FACTORY,
+  NOT_APPLICABLE,
+  RECORD_METHODS,
   CLAIMS,
   CLAIM_TOPICS,
   EXPERIMENTS,
@@ -85,6 +89,7 @@ export function Guide() {
         </div>
       </section>
 
+      <Variations />
       <Recommendations />
       <Evidence />
       <PriorArt />
@@ -255,6 +260,95 @@ function OpenQuestions() {
                 <td className="p-3 text-ink">{e.text}</td>
                 <td className="p-3 font-mono text-xs text-muted">{e.status}</td>
                 <td className="p-3 text-muted">{e.result || "None yet"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function Variations() {
+  return (
+    <section id="variations" aria-labelledby="variations-heading" className="scroll-mt-4">
+      <h2
+        id="variations-heading"
+        className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+      >
+        Without the product idea, or inside a factory
+      </h2>
+      <p className="mt-2 max-w-2xl text-base text-muted">
+        The follow-up check and the map are Viva's own idea, and nothing has tested them yet. A team
+        can swap them for something else or leave them out. Stations 1 to 4 and 8 stand on their
+        own, and they are the Start stage of this guide. Set this up at the top of the walk.
+      </p>
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
+        <div>
+          <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-margin">
+            Follow-up check
+          </h3>
+          <dl className="mt-2 grid gap-2 text-sm">
+            {CHECK_METHODS.map((m) => (
+              <div key={m.id} className="border-b border-line pb-2">
+                <dt className="font-medium text-ink">{m.label}</dt>
+                <dd className="text-muted">{m.id === "none" ? NOT_APPLICABLE.viva : m.detail}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-margin">
+            What is kept
+          </h3>
+          <dl className="mt-2 grid gap-2 text-sm">
+            {RECORD_METHODS.map((m) => (
+              <div key={m.id} className="border-b border-line pb-2">
+                <dt className="font-medium text-ink">{m.label}</dt>
+                <dd className="text-muted">{m.id === "none" ? NOT_APPLICABLE.map : m.detail}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+
+      <h3 className="mt-8 font-mono text-xs uppercase tracking-[0.18em] text-margin">
+        Inside a software factory
+      </h3>
+      <p className="mt-2 max-w-2xl text-sm text-muted">
+        In{" "}
+        <a
+          href="https://adamsuk.github.io/line/"
+          target="_blank"
+          rel="noreferrer"
+          className="text-accent underline underline-offset-4 hover:text-accent-2"
+        >
+          Line
+        </a>
+        , agents build from work orders and people plan and approve. The PR still walks the same
+        eight stations, but the author is an agent. The person who has to defend the change is the
+        one who wrote the work order and the one who approves it.
+      </p>
+      <div className="mt-4 overflow-x-auto border border-line bg-paper">
+        <table className="w-full min-w-[44rem] text-left text-sm">
+          <thead className="border-b border-line font-mono text-xs text-muted">
+            <tr>
+              <th className="p-3">Station</th>
+              <th className="p-3">Beside Line's</th>
+              <th className="p-3">Who answers</th>
+              <th className="p-3">What changes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {STATIONS.map((st) => (
+              <tr key={st.id} className="border-b border-line align-top last:border-0">
+                <th scope="row" className="p-3 font-medium text-ink">
+                  <span className="font-mono text-xs text-faint">{st.index} </span>
+                  {st.name}
+                </th>
+                <td className="p-3 text-muted">{FACTORY[st.id].line}</td>
+                <td className="p-3 text-ink">{FACTORY[st.id].owner}</td>
+                <td className="p-3 text-ink">{FACTORY[st.id].change}</td>
               </tr>
             ))}
           </tbody>

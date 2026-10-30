@@ -3,13 +3,19 @@
 
 import { RECOMMENDATIONS, STATION_IDS, type StationId } from "./model.ts";
 
-export type Answer = "covered" | "partial" | "gap";
-export const ANSWERS: Answer[] = ["covered", "partial", "gap"];
+export type Answer = "covered" | "partial" | "gap" | "na";
+export const ANSWERS: Answer[] = ["covered", "partial", "gap", "na"];
 export const ANSWER_LABEL: Record<Answer, string> = {
   covered: "Covered",
   partial: "Partial",
   gap: "Gap",
+  na: "N/A",
 };
+
+/** The answers a question offers. Only questions about Viva's own ideas can be N/A. */
+export function answersFor(q: AuditQuestion): Answer[] {
+  return q.na ? ANSWERS : ANSWERS.filter((a) => a !== "na");
+}
 
 export interface AuditQuestion {
   id: string;
@@ -21,6 +27,11 @@ export interface AuditQuestion {
   gap: string;
   /** Recommendation ids at that station. Empty means the station's whole list. */
   recs: string[];
+  /**
+   * Set when the question is about Viva's own product idea (the follow-up check or the map).
+   * A team that chose not to use it answers N/A, with this rule, and is not scored on it.
+   */
+  na?: string;
 }
 
 export const HOMEPAGE = {
@@ -109,11 +120,12 @@ export const QUESTIONS: AuditQuestion[] = [
   {
     id: "viva-question",
     station: "viva",
-    q: "After an AI-assisted change, is the author ever asked a question about it, beyond review comments?",
-    covered: "One small question, with a confidence rating, and the answer shown straight after.",
+    q: "After an AI-assisted change, is understanding checked beyond review comments: a question, a walkthrough, or some other way?",
+    covered: "Routinely, and the answer or explanation is discussed straight after.",
     partial: "Sometimes, in conversation.",
-    gap: "Never.",
+    gap: "Never, and review approval is not held to that standard either.",
     recs: ["one-small-question", "ask-confidence", "teach-with-the-answer"],
+    na: "We chose not to add a follow-up check. Descriptions and review carry it.",
   },
   {
     id: "viva-dispute",
@@ -123,6 +135,7 @@ export const QUESTIONS: AuditQuestion[] = [
     partial: "One or the other.",
     gap: "Generated questions are final, or treated as proof.",
     recs: ["dispute-questions", "practice-not-security"],
+    na: "No generated questions are used.",
   },
   {
     id: "merge-wrong",
@@ -130,17 +143,19 @@ export const QUESTIONS: AuditQuestion[] = [
     q: "What does a wrong answer do?",
     covered: "Opens a short conversation. Waivers are recorded on the PR.",
     partial: "Blocks the merge, or is ignored.",
-    gap: "There is no question, so nothing.",
+    gap: "Nothing. The answer is recorded and ignored.",
     recs: ["talk-not-block", "waiver-recorded"],
+    na: "There is no follow-up check, so there is no answer to act on.",
   },
   {
     id: "map-private",
     station: "map",
-    q: "Who can see each person's answers?",
+    q: "If answers or notes are kept, who can see each person's?",
     covered: "Only them, unless they choose to share. Never used in performance review.",
     partial: "Their manager, by default.",
     gap: "A dashboard or ranking, or nobody has decided.",
     recs: ["private-by-default", "topics-not-people"],
+    na: "Nothing is kept about individuals.",
   },
   {
     id: "map-purpose",
@@ -150,6 +165,7 @@ export const QUESTIONS: AuditQuestion[] = [
     partial: "Mentioned in passing.",
     gap: "No.",
     recs: ["say-why-first"],
+    na: "Nothing is collected.",
   },
   {
     id: "loop-next",
@@ -182,33 +198,44 @@ export function gapRecommendations(q: AuditQuestion): string[] {
 
 export type Answers = Record<string, Answer>;
 
-export type Score = "Covered" | "Partial" | "Gap" | "Not started";
+export type Score = "Covered" | "Partial" | "Gap" | "N/A" | "Not started";
 
 export interface StationResult {
   station: StationId;
   answered: number;
   total: number;
-  /** 0 to 100. Covered counts 1, partial a half, gap nothing. */
+  /** 0 to 100. Covered counts 1, partial a half, gap nothing. N/A answers are left out. */
   percent: number;
+  /** Answers that count towards the percent: everything but N/A. */
+  scored: number;
   score: Score;
 }
 
 export function scoreQuestions(questions: AuditQuestion[], answers: Answers) {
-  const answered = questions.filter((q) => answers[q.id]);
+  const all = questions.filter((q) => answers[q.id]);
+  const answered = all.filter((q) => answers[q.id] !== "na");
   const points = answered.reduce(
     (sum, q) => sum + (answers[q.id] === "covered" ? 1 : answers[q.id] === "partial" ? 0.5 : 0),
     0,
   );
   const percent = answered.length ? Math.round((points / answered.length) * 100) : 0;
   const score: Score =
-    answered.length === 0
+    all.length === 0
       ? "Not started"
-      : answered.some((q) => answers[q.id] === "gap")
-        ? "Gap"
-        : answered.some((q) => answers[q.id] === "partial")
-          ? "Partial"
-          : "Covered";
-  return { answered: answered.length, total: questions.length, percent, score };
+      : answered.length === 0
+        ? "N/A"
+        : answered.some((q) => answers[q.id] === "gap")
+          ? "Gap"
+          : answered.some((q) => answers[q.id] === "partial")
+            ? "Partial"
+            : "Covered";
+  return {
+    answered: all.length,
+    scored: answered.length,
+    total: questions.length,
+    percent,
+    score,
+  };
 }
 
 export function stationResults(answers: Answers): StationResult[] {
@@ -219,7 +246,7 @@ export function stationResults(answers: Answers): StationResult[] {
 }
 
 export function weakestStation(results: StationResult[]): StationResult | null {
-  const started = results.filter((r) => r.answered > 0);
+  const started = results.filter((r) => r.scored > 0);
   if (!started.length) return null;
   return started.reduce((a, b) => (b.percent < a.percent ? b : a));
 }

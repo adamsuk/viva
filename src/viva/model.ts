@@ -174,7 +174,7 @@ export const DIFF: { kind: "add" | "del" | "ctx"; text: string }[] = [
   { kind: "ctx", text: "}" },
 ];
 
-export type DraftChoice = "delegate" | "explain" | "ask";
+export type DraftChoice = "delegate" | "explain" | "ask" | "vague" | "checks" | "session";
 
 export const DRAFT_CHOICES: { id: DraftChoice; label: string; detail: string; result: string }[] = [
   {
@@ -200,7 +200,7 @@ export const DRAFT_CHOICES: { id: DraftChoice; label: string; detail: string; re
   },
 ];
 
-export type PostChoice = "agent" | "own";
+export type PostChoice = "agent" | "own" | "claim" | "record";
 
 export const POST_CHOICES: { id: PostChoice; label: string; body: string }[] = [
   {
@@ -217,6 +217,55 @@ export const POST_CHOICES: { id: PostChoice; label: string; body: string }[] = [
 
 export const POST_SENT_BACK =
   "Sent back. The agent's description says what changed in words that fit any PR. It names no risk and no reason, and nobody can tell whether the author could answer a question about it. Write the why, the decision you are least sure of, and say where AI helped.";
+
+/** In a software factory an agent builds the edit. The person shapes it through the work order. */
+export const FACTORY_DRAFT_CHOICES: {
+  id: DraftChoice;
+  label: string;
+  detail: string;
+  result: string;
+  sentBack?: string;
+}[] = [
+  {
+    id: "vague",
+    label: "Title only",
+    detail: 'File "Retry failed webhooks" and let the agent work out the rest.',
+    result: "",
+    sentBack:
+      "Sent back. The line does not start from a vague idea. Without checks that mean done, the agent decides what done means, and nobody can say later what the change was meant to do.",
+  },
+  {
+    id: "checks",
+    label: "Write the checks that mean done",
+    detail:
+      "A failed delivery is retried up to five times. A repeat never reaches the receiver twice.",
+    result:
+      "The agent builds against your checks. You know what the change must do. You have not seen how it does it.",
+  },
+  {
+    id: "session",
+    label: "Write the checks, then read the session",
+    detail: "Same checks, then read how the agent got there before the PR opens.",
+    result:
+      "You know what it must do and how it was built, including why the agent added an Idempotency-Key header. Reading the session is the factory version of generate-then-understand.",
+  },
+];
+
+export const FACTORY_POST_CHOICES: { id: PostChoice; label: string; body: string }[] = [
+  {
+    id: "claim",
+    label: "The agent's summary",
+    body: "Implemented robust webhook retries with exponential backoff and idempotency. All tests pass. Ready to merge.",
+  },
+  {
+    id: "record",
+    label: "An evidence record",
+    body: "Agreed: up to five tries; a repeat never reaches the receiver twice. Checks on this commit: retry.test (6 pass), idempotency.test (3 pass). Not asked for: none. Reach: every outbound webhook. Owner is least sure of: the 3s timeout. Assisted-by: build agent.",
+  },
+];
+
+export const FACTORY_POST_SENT_BACK =
+  "Sent back. An agent saying it is done is not evidence. The record should tie the agreed behaviour to the checks that ran on this commit, flag anything nobody asked for, and say how far a mistake would reach.";
 
 export type Triage = "forward" | "dismiss";
 
@@ -384,7 +433,7 @@ export const MAP_HISTORY: { topic: string; outcome: Outcome; checks: number }[] 
 
 export const MAP_TOPIC = "Idempotent retries";
 
-export type LoopChoice = "pair" | "hand" | "read";
+export type LoopChoice = "pair" | "hand" | "read" | "route";
 
 export const LOOP_CHOICES: { id: LoopChoice; label: string; detail: string }[] = [
   {
@@ -403,6 +452,232 @@ export const LOOP_CHOICES: { id: LoopChoice; label: string; detail: string }[] =
     detail: "A short read on the concept, and another question in a week.",
   },
 ];
+
+export const FACTORY_LOOP_CHOICES: { id: LoopChoice; label: string; detail: string }[] = [
+  {
+    id: "route",
+    label: "Route the area to a person",
+    detail:
+      "Until someone can explain it, changes there need a named human reviewer who knows the area.",
+  },
+  {
+    id: "hand",
+    label: "A person builds the next one",
+    detail: "The next work order in this area is built by a person, with the agent checking.",
+  },
+  {
+    id: "pair",
+    label: "Pair on the session",
+    detail: "Thirty minutes reading the agent's session with someone strong in the area.",
+  },
+];
+
+// Setting up the walk. The follow-up check and the map are Viva's product idea, so a team can
+// replace them or leave them out. The walk can also run inside a software factory, as in Line.
+
+export type Mode = "team" | "factory";
+export type CheckMethod = "question" | "walkthrough" | "none";
+export type RecordMethod = "map" | "journal" | "none";
+
+export interface Setup {
+  mode: Mode;
+  check: CheckMethod;
+  record: RecordMethod;
+}
+
+export const DEFAULT_SETUP: Setup = { mode: "team", check: "question", record: "map" };
+
+export const MODES: { id: Mode; label: string; detail: string }[] = [
+  {
+    id: "team",
+    label: "People with AI",
+    detail: "A person writes the change with an assistant, then posts it.",
+  },
+  {
+    id: "factory",
+    label: "A software factory",
+    detail: "Agents build from work orders. People plan and approve, as in Line.",
+  },
+];
+
+export const CHECK_METHODS: {
+  id: CheckMethod;
+  label: string;
+  detail: string;
+  name: string;
+  part: string;
+}[] = [
+  {
+    id: "question",
+    label: "A viva question",
+    detail: "One scenario question with a confidence rating. Viva's product idea.",
+    name: "Viva",
+    part: "One question",
+  },
+  {
+    id: "walkthrough",
+    label: "A walkthrough",
+    detail: "Five minutes talking the reviewer through the change, no agent open.",
+    name: "Walkthrough",
+    part: "Live explanation",
+  },
+  {
+    id: "none",
+    label: "None",
+    detail: "No follow-up check. The description and review carry it.",
+    name: "Follow-up",
+    part: "Not used",
+  },
+];
+
+export const RECORD_METHODS: {
+  id: RecordMethod;
+  label: string;
+  detail: string;
+  name: string;
+  part: string;
+}[] = [
+  {
+    id: "map",
+    label: "A private map",
+    detail: "Answers grouped by topic over time. Needs a follow-up check to feed it.",
+    name: "Map",
+    part: "Private picture",
+  },
+  {
+    id: "journal",
+    label: "A learning log",
+    detail: "The person keeps one line per PR: what they had to look up or ask.",
+    name: "Log",
+    part: "Own notes",
+  },
+  {
+    id: "none",
+    label: "None",
+    detail: "Nothing is kept. Next steps come from reviews and one-to-ones.",
+    name: "Record",
+    part: "Not used",
+  },
+];
+
+export const JOURNAL: string[] = [
+  "#198: looked up how jitter spreads retries.",
+  "#205: asked why the migration needed a lock.",
+  "#209: could not say what refresh does on a 401. Asked in review.",
+];
+
+/** Why a station is skipped when its method is None. */
+export const NOT_APPLICABLE: Partial<Record<StationId, string>> = {
+  viva: "No follow-up check is used. Understanding is checked by the author's own description at Post, and by a reviewer who approves only what they could explain. That is the Start stage of the guide, and it holds up on its own.",
+  merge:
+    "With no follow-up check there is no answer to act on. The change merges on its checks and a named approval.",
+  map: "Nothing is kept. That is a fair choice: a record is only worth keeping if it leads to a next step and stays private. Next steps come from review conversations and one-to-ones instead.",
+};
+
+/** Whether a station is skipped under this setup. */
+export function notApplicable(id: StationId, setup: Setup): boolean {
+  if (id === "viva" || id === "merge") return setup.check === "none";
+  if (id === "map") return setup.record === "none";
+  return false;
+}
+
+/** The station as it reads under this setup: its name, part and owner can change. */
+export function stationFor(id: StationId, setup: Setup): Station {
+  const base = stationById(id);
+  let { name, part, owner } = base;
+  if (id === "viva") {
+    const m = CHECK_METHODS.find((c) => c.id === setup.check)!;
+    name = m.name;
+    part = m.part;
+  }
+  if (id === "map") {
+    const m = RECORD_METHODS.find((c) => c.id === setup.record)!;
+    name = m.name;
+    part = m.part;
+  }
+  let thesis = base.thesis;
+  if (setup.mode === "factory") {
+    owner = FACTORY[id].owner;
+    thesis = FACTORY[id].thesis ?? thesis;
+  }
+  return { ...base, name, part, owner, thesis };
+}
+
+export interface FactoryNote {
+  /** The Line station or stations this one sits beside. */
+  line: string;
+  owner: string;
+  /** The station's thesis when an agent is the author, if it reads differently. */
+  thesis?: string;
+  change: string;
+  sources: ReferenceId[];
+}
+
+/** What changes at each station when the PR comes out of a software factory. */
+export const FACTORY: Record<StationId, FactoryNote> = {
+  draft: {
+    line: "Backlog and Bench",
+    owner: "Work order owner",
+    thesis:
+      "An agent builds the change from a work order. The person shapes it through the checks that mean done, and through how closely they read what the agent did.",
+    change:
+      "An agent builds the edit, so nobody is at the keyboard to learn from it. The person's understanding comes from the work order: the checks that mean done. Reading the agent's session is how they learn how it was built. A vague work order is sent back before the agent starts.",
+    sources: ["line-guide", "spec-sign-off", "shen-tamkin"],
+  },
+  post: {
+    line: "Gate",
+    owner: "The factory",
+    thesis:
+      "The agent opens the PR. Its description is a record the factory requires, not an author's defence.",
+    change:
+      "The agent opens the PR, so an agent-written description is expected. It has to be a record, not a claim: the agreed behaviour, the checks that ran on this commit, behaviour nobody asked for, and how far a mistake would reach. The work order owner adds the decision they are least sure of.",
+    sources: ["oreilly-cheap-review", "spec-sign-off", "line-guide"],
+  },
+  bot: {
+    line: "Review",
+    owner: "Reviewer",
+    change:
+      "Line's review agent runs after the gate, in the background, and its comments are staged, not posted straight away. The reviewer still triages them. Sending one back to the building agent as an instruction is the factory version of reposting it, so it still needs a person who could defend it.",
+    sources: ["line-guide", "coderabbit-wild"],
+  },
+  review: {
+    line: "Review",
+    owner: "Reviewer",
+    change:
+      "Agents open PRs faster than people can read them, so approval drift is the bigger risk here. Line caps agent PRs at what people can read. The reviewer reads the agent's session as well as the diff.",
+    sources: ["faster-than-review", "habituation", "line-guide"],
+  },
+  viva: {
+    line: "Review, before approval",
+    owner: "Approver and work order owner",
+    thesis:
+      "One small check for the people who asked for the change and who approve it, before the approval counts.",
+    change:
+      "There is no human author to ask. The check goes to the person who approves, before the approval counts, and to the work order owner. It is never a required gate check: Line trusts checks that are cheap, run every time and are hard to fake, and a question a model can answer is easy to fake.",
+    sources: ["pr-quiz", "line-guide", "lehtinen-ai-qlc"],
+  },
+  merge: {
+    line: "Gate and Artifact",
+    owner: "The factory and the approver",
+    change:
+      "Merge is decided by the gate's checks and a named approval, as in Line. An answer can hold up approval for a conversation, but it is never one of the checks.",
+    sources: ["line-guide", "explyt-gate"],
+  },
+  map: {
+    line: "Return",
+    owner: "The person",
+    change:
+      "Comprehension debt grows fastest when agents write most of the code. The factory's version of the map is a topic view: which areas of its output nobody can explain. It never names people.",
+    sources: ["osmani-debt", "ravid-epm"],
+  },
+  loop: {
+    line: "Return",
+    owner: "Product and the person",
+    change:
+      "In Line, the production signal becomes the next work order. A thin area can too: route changes there to a person who knows it, or have a person build the next one, until someone can explain it.",
+    sources: ["line-guide", "feng-junior-senior"],
+  },
+};
 
 export const PARTS: { name: string; station: string; definition: string; here: string }[] = [
   {
@@ -484,7 +759,11 @@ export type ReferenceId =
   | "pr-quiz"
   | "kernel-assistants"
   | "gnome-review"
-  | "owasp-ai";
+  | "owasp-ai"
+  | "line-guide"
+  | "oreilly-cheap-review"
+  | "spec-sign-off"
+  | "faster-than-review";
 
 export interface Reference {
   id: ReferenceId;
@@ -798,6 +1077,48 @@ export const FURTHER_READING: { heading: string; refs: Reference[] }[] = [
         date: "15 October 2026",
         url: "https://explyt.ai/en/blog/comprehension-debt-quiz-gate",
         took: "A design, not a study. Three change-specific questions, depth by risk tier, a wrong answer triggers investigation not failure, and a waiver recorded on the PR. Warns against ranking people by fluency.",
+      },
+    ],
+  },
+  {
+    heading: "Software factories",
+    refs: [
+      {
+        id: "line-guide",
+        title: "Line: a best practice guide to bringing agents into a software factory",
+        author: "adamsuk",
+        publication: "adamsuk.github.io",
+        date: "Checked 30 October 2026",
+        url: "https://adamsuk.github.io/line/",
+        took: "The factory this walk can run inside. Nine stations, from work order to production signal. People plan and approve, agents build, and a change moves only on evidence, never on a claim.",
+      },
+      {
+        id: "oreilly-cheap-review",
+        title: "Code Review After Code Gets Cheap",
+        author: "Markus Eisele",
+        publication: "O'Reilly Radar",
+        date: "16 October 2026",
+        url: "https://www.oreilly.com/radar/code-review-after-code-gets-cheap/",
+        took: "Start review from a short record tying agreed behaviour to the checks that ran on this revision, and flag behaviour nobody asked for.",
+      },
+      {
+        id: "spec-sign-off",
+        title: "Who Holds the Pen? Let Specifications, Not Agents, Sign Off",
+        author: "Haiqing Li and others",
+        publication: "arXiv",
+        date: "24 September 2026",
+        url: "https://arxiv.org/abs/2609.29921",
+        took: "Agents claim success more often than they pass. Checks drawn from the spec, outside the agent, should sign off.",
+      },
+      {
+        id: "faster-than-review",
+        title:
+          "AI Writes Faster Than Humans Can Review: A Longitudinal Study of an Enterprise 2x Mandate",
+        author: "Hao He, Shyam Agarwal, Yegor Denisov-Blanch and others",
+        publication: "arXiv",
+        date: "2 July 2026",
+        url: "https://arxiv.org/abs/2607.01904",
+        took: "Merged PRs per engineer doubled. Load per reviewer roughly doubled too, and automated review overtook human review.",
       },
     ],
   },

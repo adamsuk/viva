@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { RECOMMENDATIONS, STATIONS, stationById } from "@/viva/model";
 import {
-  ANSWERS,
   ANSWER_LABEL,
   STATION_QUESTIONS,
   STORAGE_KEY,
+  answersFor,
   gapRecommendations,
   parseAnswers,
   scoreQuestions,
@@ -114,6 +114,7 @@ const TONE: Record<Answer, string> = {
   covered: "border-pass bg-pass-bg",
   partial: "border-hold bg-hold-bg",
   gap: "border-fail bg-fail-bg",
+  na: "border-faint bg-paper-2",
 };
 
 function Question({
@@ -125,13 +126,23 @@ function Question({
   answer: Answer | undefined;
   onAnswer: (id: string, a: Answer) => void;
 }) {
-  const rule: Record<Answer, string> = { covered: q.covered, partial: q.partial, gap: q.gap };
+  const rule: Record<Answer, string> = {
+    covered: q.covered,
+    partial: q.partial,
+    gap: q.gap,
+    na: q.na ?? "",
+  };
+  const options = answersFor(q);
   return (
     <li className="rounded-xl border border-line p-3 sm:p-4">
       <fieldset>
         <legend className="text-sm text-ink">{q.q}</legend>
-        <div className="mt-3 grid gap-2 md:grid-cols-3">
-          {ANSWERS.map((a) => (
+        <div
+          className={
+            "mt-3 grid gap-2 " + (options.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3")
+          }
+        >
+          {options.map((a) => (
             <label
               key={a}
               className={
@@ -184,6 +195,7 @@ const SCORE_TONE: Record<Score, string> = {
   Covered: "bg-pass-bg text-pass",
   Partial: "bg-hold-bg text-hold",
   Gap: "bg-fail-bg text-fail",
+  "N/A": "bg-paper-2 text-faint",
   "Not started": "bg-paper-2 text-muted",
 };
 
@@ -212,8 +224,8 @@ function Summary({ answers }: { answers: Answers }) {
         Summary
       </h3>
       <p className="mt-1 text-sm text-muted">
-        Covered counts as one, partial as a half, gap as nothing. The weakest station has the lowest
-        share, ties going to the earliest.
+        Covered counts as one, partial as a half, gap as nothing, and N/A is left out. The weakest
+        station has the lowest share, ties going to the earliest.
       </p>
       <div
         aria-live="polite"
@@ -268,7 +280,7 @@ function Summary({ answers }: { answers: Answers }) {
                     <ScoreBadge score={r.score} />
                   </td>
                   <td className="py-2 pr-3 tabular-nums text-muted">
-                    {r.answered ? `${r.percent}%` : ""}
+                    {r.scored ? `${r.percent}%` : r.answered ? "N/A" : ""}
                   </td>
                   <td className="py-2 tabular-nums text-muted">
                     {r.answered} of {r.total}

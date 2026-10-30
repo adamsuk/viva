@@ -1,7 +1,7 @@
 // Hash routes. Three views, plus anchors for sections inside the guide.
 
 export type View = "home" | "walk" | "guide";
-export type Anchor = "parts" | "evidence" | "prior-art" | "audit" | null;
+export type Anchor = "parts" | "evidence" | "prior-art" | "variations" | "audit" | null;
 
 export interface Route {
   view: View;
@@ -19,6 +19,7 @@ export function routeFromHash(hash: string): Route {
       return { view: "home", anchor: "parts" };
     case "evidence":
     case "prior-art":
+    case "variations":
     case "audit":
       return { view: "guide", anchor: key };
     default:

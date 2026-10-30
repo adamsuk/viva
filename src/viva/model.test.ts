@@ -4,6 +4,10 @@ import {
   ALL_REFERENCES,
   BOT_COMMENTS,
   CLAIMS,
+  FACTORY,
+  STATION_IDS as IDS,
+  notApplicable,
+  stationFor,
   GAPS,
   GUIDE,
   QUESTION,
@@ -36,6 +40,7 @@ test("every cited source exists", () => {
   const ids = new Set(ALL_REFERENCES.map((r) => r.id));
   const cited = [
     ...STATIONS.flatMap((s) => s.sources ?? []),
+    ...Object.values(FACTORY).flatMap((f) => f.sources),
     ...Object.values(GUIDE).flatMap((g) => g.sources),
     ...RECOMMENDATIONS.flatMap((r) => r.sources),
     ...CLAIMS.flatMap((c) => c.sources),
@@ -46,6 +51,7 @@ test("every cited source exists", () => {
 test("every source is cited somewhere", () => {
   const cited = new Set([
     ...STATIONS.flatMap((s) => s.sources ?? []),
+    ...Object.values(FACTORY).flatMap((f) => f.sources),
     ...Object.values(GUIDE).flatMap((g) => g.sources),
     ...RECOMMENDATIONS.flatMap((r) => r.sources),
     ...CLAIMS.flatMap((c) => c.sources),
@@ -88,4 +94,15 @@ test("confidence splits right and wrong answers four ways", () => {
   assert.equal(outcomeOf(true, "guess"), "fragile");
   assert.equal(outcomeOf(false, "sure"), "blind");
   assert.equal(outcomeOf(false, "think"), "thin");
+});
+
+test("every station has a factory note, and only Viva's own stations can be skipped", () => {
+  for (const id of IDS) assert.ok(FACTORY[id].change, id);
+  const none = { mode: "team" as const, check: "none" as const, record: "none" as const };
+  assert.deepEqual(
+    IDS.filter((id) => notApplicable(id, none)),
+    ["viva", "merge", "map"],
+  );
+  assert.equal(stationFor("viva", { ...none, check: "walkthrough" }).name, "Walkthrough");
+  assert.equal(stationFor("draft", { ...none, mode: "factory" }).owner, "Work order owner");
 });

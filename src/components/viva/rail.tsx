@@ -1,4 +1,4 @@
-import { STATIONS, stationIndex } from "@/viva/model";
+import { STATIONS, notApplicable, stationFor, stationIndex } from "@/viva/model";
 import { frontier, stationDone, useViva } from "@/viva/store";
 
 export function Rail() {
@@ -15,7 +15,9 @@ export function Rail() {
       <p className="hidden py-2 font-mono text-xs uppercase tracking-[0.18em] text-muted lg:block">
         Questions
       </p>
-      {STATIONS.map((station) => {
+      {STATIONS.map((base) => {
+        const station = stationFor(base.id, walk.setup);
+        const skipped = notApplicable(base.id, walk.setup);
         const locked = stationIndex(station.id) > frontierIndex;
         const selected = focus === station.id;
         const done = stationDone(walk, station.id);
@@ -38,14 +40,33 @@ export function Rail() {
               {Number(station.index)}.
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium leading-tight">{station.name}</span>
-              <span className="block text-xs text-faint">{station.part}</span>
+              <span
+                className={
+                  "block text-sm font-medium leading-tight " +
+                  (skipped ? "text-faint line-through" : "")
+                }
+              >
+                {station.name}
+              </span>
+              <span className="block text-xs text-faint">
+                {skipped ? "Not applicable" : station.part}
+              </span>
             </span>
             <span
               className={"font-display text-lg " + (done ? "text-pass" : "text-faint")}
-              aria-label={done ? "done" : locked ? "not yet" : undefined}
+              aria-label={
+                skipped ? "not applicable" : done ? "done" : locked ? "not yet" : undefined
+              }
             >
-              {done ? "✓" : locked ? "·" : ""}
+              {skipped ? (
+                <span className="font-mono text-[0.65rem] tracking-wider">N/A</span>
+              ) : done ? (
+                "✓"
+              ) : locked ? (
+                "·"
+              ) : (
+                ""
+              )}
             </span>
           </button>
         );

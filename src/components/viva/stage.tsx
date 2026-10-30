@@ -5,7 +5,13 @@ import {
   CONFIDENCE,
   DIFF,
   DRAFT_CHOICES,
+  FACTORY,
+  FACTORY_DRAFT_CHOICES,
+  FACTORY_LOOP_CHOICES,
+  FACTORY_POST_CHOICES,
   GUIDE,
+  JOURNAL,
+  NOT_APPLICABLE,
   LOOP_CHOICES,
   MAP_CHOICES,
   MAP_HISTORY,
@@ -18,7 +24,8 @@ import {
   RECOMMENDATIONS,
   REVIEW_CHOICES,
   nextStation,
-  stationById,
+  notApplicable,
+  stationFor,
   type Outcome,
   type StationId,
 } from "@/viva/model";
@@ -26,40 +33,81 @@ import { stationDone, useViva, vivaOutcome, type WalkState } from "@/viva/store"
 
 export function Stage() {
   const focus = useViva((s) => s.focus);
-  const station = stationById(focus);
+  const setup = useViva((s) => s.walk.setup);
+  const station = stationFor(focus, setup);
+  const skipped = notApplicable(focus, setup);
 
   return (
     <article className="border border-line border-t-4 border-t-ink bg-paper p-4 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
-          Question {Number(station.index)} of 8 · {station.part}
+          Question {Number(station.index)} of 8 · {skipped ? "N/A" : station.part}
         </p>
         <p className="font-mono text-xs text-faint">Answered by: {station.owner}</p>
       </div>
       <h2 className="mt-4 font-display text-4xl text-ink sm:text-5xl">{station.name}</h2>
       <p className="mt-3 max-w-2xl font-display text-xl leading-snug text-muted italic">
-        {station.thesis}
+        {skipped ? "Not used in this setup." : station.thesis}
       </p>
 
       <div className="mt-6">
-        {focus === "draft" && <Draft />}
-        {focus === "post" && <Post />}
-        {focus === "bot" && <Bot />}
-        {focus === "review" && <Review />}
-        {focus === "viva" && <Viva />}
-        {focus === "merge" && <Merge />}
-        {focus === "map" && <MapStation />}
-        {focus === "loop" && <Loop />}
+        {skipped ? (
+          <NotApplicable id={focus} />
+        ) : (
+          <>
+            {focus === "draft" && <Draft />}
+            {focus === "post" && <Post />}
+            {focus === "bot" && <Bot />}
+            {focus === "review" && <Review />}
+            {focus === "viva" && <Viva />}
+            {focus === "merge" && <Merge />}
+            {focus === "map" && <MapStation />}
+            {focus === "loop" && <Loop />}
+          </>
+        )}
       </div>
 
-      <aside className="mt-8 border-l-4 border-margin bg-paper-2 p-4">
-        <p className="font-display text-lg italic text-margin">Examiner's note</p>
-        <p className="mt-1 font-display text-lg leading-snug text-ink">{station.lesson}</p>
-        {station.sources ? <Sources ids={station.sources} /> : null}
-      </aside>
+      {setup.mode === "factory" ? <FactoryPanel id={focus} /> : null}
 
-      <GuidePanel id={focus} />
+      {skipped ? null : (
+        <>
+          <aside className="mt-8 border-l-4 border-margin bg-paper-2 p-4">
+            <p className="font-display text-lg italic text-margin">Examiner's note</p>
+            <p className="mt-1 font-display text-lg leading-snug text-ink">{station.lesson}</p>
+            {station.sources ? <Sources ids={station.sources} /> : null}
+          </aside>
+
+          <GuidePanel id={focus} />
+        </>
+      )}
     </article>
+  );
+}
+
+function NotApplicable({ id }: { id: StationId }) {
+  return (
+    <div className="grid gap-4">
+      <div className="border border-dashed border-line p-4">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-faint">Not applicable</p>
+        <p className="mt-2 text-sm text-ink">{NOT_APPLICABLE[id]}</p>
+      </div>
+      <Continue id={id} />
+    </div>
+  );
+}
+
+/** What changes at this station when the PR comes out of a software factory, as in Line. */
+function FactoryPanel({ id }: { id: StationId }) {
+  const note = FACTORY[id];
+  return (
+    <aside className="mt-8 border border-accent/40 bg-accent-bg p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-display text-lg text-accent italic">In a software factory</p>
+        <p className="font-mono text-xs text-muted">Beside Line's {note.line}</p>
+      </div>
+      <p className="mt-1 text-sm text-ink">{note.change}</p>
+      <Sources ids={note.sources} />
+    </aside>
   );
 }
 
@@ -108,6 +156,7 @@ function Continue({ id }: { id: StationId }) {
   const advance = useViva((s) => s.advance);
   const next = nextStation(id);
   if (!next || !stationDone(walk, id)) return null;
+  const nextStationView = stationFor(next, walk.setup);
   return (
     <div>
       <button
@@ -115,7 +164,8 @@ function Continue({ id }: { id: StationId }) {
         onClick={advance}
         className="min-h-11 rounded-md bg-accent px-4 text-sm font-medium text-on-accent"
       >
-        Continue to {stationById(next).name.toLowerCase()}
+        Continue to {nextStationView.name.toLowerCase()}
+        {notApplicable(next, walk.setup) ? " (N/A)" : ""}
       </button>
     </div>
   );
@@ -204,8 +254,11 @@ function Diff({ highlight }: { highlight?: string }) {
 
 function Draft() {
   const draft = useViva((s) => s.walk.draft);
+  const factory = useViva((s) => s.walk.setup.mode === "factory");
   const choose = useViva((s) => s.choose);
-  const picked = DRAFT_CHOICES.find((c) => c.id === draft);
+  const options = factory ? FACTORY_DRAFT_CHOICES : DRAFT_CHOICES;
+  const picked = options.find((c) => c.id === draft);
+  const unread = draft === "delegate" || draft === "checks";
   return (
     <div className="grid gap-4">
       <Panel label={`PR ${PR.id} · ${PR.branch}`}>
@@ -213,19 +266,26 @@ function Draft() {
         <p className="mt-2 text-sm text-muted">{PR.summary}</p>
       </Panel>
       <Choices
-        legend="You are the author. How do you use the AI?"
-        options={DRAFT_CHOICES}
+        legend={
+          factory
+            ? "You own the work order. An agent will build it. What do you hand it?"
+            : "You are the author. How do you use the AI?"
+        }
+        options={options}
         value={draft}
         onChoose={(id) => choose("draft", "draft", id)}
+        sentBack={(id) => Boolean(FACTORY_DRAFT_CHOICES.find((c) => c.id === id)?.sentBack)}
       />
-      {picked ? (
+      {picked && !("sentBack" in picked && picked.sentBack) ? (
         <>
           <p className="rounded-lg border border-line bg-paper-2 p-3 text-sm text-ink">
             {picked.result}
           </p>
-          {draft === "delegate" ? (
+          {unread ? (
             <p className="text-sm text-muted">
-              The agent's change is ready. You have not looked at it.
+              {factory
+                ? "The agent has opened the PR. You have not read its session or the diff."
+                : "The agent's change is ready. You have not looked at it."}
             </p>
           ) : (
             <Diff />
@@ -239,15 +299,20 @@ function Draft() {
 
 function Post() {
   const post = useViva((s) => s.walk.post);
+  const factory = useViva((s) => s.walk.setup.mode === "factory");
   const choose = useViva((s) => s.choose);
   return (
     <div className="grid gap-4">
       <fieldset>
-        <legend className="text-sm font-medium text-ink">Which description goes on the PR?</legend>
+        <legend className="text-sm font-medium text-ink">
+          {factory
+            ? "The agent opens the PR. What should the factory require as its description?"
+            : "Which description goes on the PR?"}
+        </legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          {POST_CHOICES.map((o) => {
+          {(factory ? FACTORY_POST_CHOICES : POST_CHOICES).map((o) => {
             const selected = post === o.id;
-            const back = selected && o.id === "agent";
+            const back = selected && (o.id === "agent" || o.id === "claim");
             return (
               <button
                 key={o.id}
@@ -278,12 +343,14 @@ function Post() {
 
 function Bot() {
   const triage = useViva((s) => s.walk.triage);
+  const factory = useViva((s) => s.walk.setup.mode === "factory");
   const setTriage = useViva((s) => s.triage);
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted">
-        The review bot left two comments. Check each against the diff. Forward the ones you would
-        put your name to. Dismiss the rest.
+        {factory
+          ? "The review agent ran after the gate and staged two comments. Check each against the diff. Send back to the building agent only the ones you would put your name to."
+          : "The review bot left two comments. Check each against the diff. Forward the ones you would put your name to. Dismiss the rest."}
       </p>
       <Diff />
       {BOT_COMMENTS.map((c) => {
@@ -307,7 +374,11 @@ function Bot() {
                       : "border-line text-ink hover:border-ink")
                   }
                 >
-                  {v === "forward" ? "Forward as mine" : "Dismiss"}
+                  {v === "forward"
+                    ? factory
+                      ? "Send to the agent"
+                      : "Forward as mine"
+                    : "Dismiss"}
                 </button>
               ))}
             </div>
@@ -331,12 +402,15 @@ function Bot() {
 
 function Review() {
   const review = useViva((s) => s.walk.review);
+  const factory = useViva((s) => s.walk.setup.mode === "factory");
+  const check = useViva((s) => s.walk.setup.check);
   const choose = useViva((s) => s.choose);
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted">
-        You are now the reviewer. The checks are green, the description is clear, and the only bot
-        comment left is about jitter.
+        {factory
+          ? "You are the reviewer, and you approve. The gate is green, the record ties every check to this commit, and the agent has added jitter. This is the ninth agent PR in your queue today."
+          : "You are now the reviewer. The checks are green, the description is clear, and the only bot comment left is about jitter."}
       </p>
       <Choices
         legend="What do you do?"
@@ -348,8 +422,14 @@ function Review() {
       {review === "read" ? (
         <>
           <p className="text-sm text-muted">
-            You trace one failure: the request times out, the loop sleeps, and the retry goes out
-            with the same header. You write one question for the author.
+            {factory
+              ? "You read the agent's session and trace one failure: the request times out, the loop sleeps, and the retry goes out with the same header."
+              : "You trace one failure: the request times out, the loop sleeps, and the retry goes out with the same header."}
+            {check === "none"
+              ? " You could explain it to someone else, so you approve."
+              : factory
+                ? ""
+                : " You write one question for the author."}
           </p>
           <Diff highlight="Idempotency-Key" />
         </>
@@ -364,12 +444,19 @@ function Viva() {
   const choose = useViva((s) => s.choose);
   const outcome = vivaOutcome(walk);
   const locked = outcome !== null;
+  const { mode, check } = walk.setup;
+  const intro =
+    mode === "factory"
+      ? check === "walkthrough"
+        ? "You own the work order. You talk the approver through what the agent built, with no agent open. They stop you at the retry loop and ask:"
+        : "You are the approver. Before your approval counts, answer one question about the change, with no agent open. Then say how sure you are."
+      : check === "walkthrough"
+        ? "You are the author. In a five-minute walkthrough, with no agent open, the reviewer stops you at the retry loop and asks:"
+        : "You are the author again. Answer without opening the agent. Then say how sure you are.";
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-muted">
-        You are the author again. Answer without opening the agent. Then say how sure you are.
-      </p>
-      <Panel label="One question">
+      <p className="text-sm text-muted">{intro}</p>
+      <Panel label={check === "walkthrough" ? "Asked live" : "One question"}>
         <p className="mt-2 text-base text-ink">{QUESTION.prompt}</p>
         <fieldset className="mt-3" disabled={locked}>
           <legend className="sr-only">Answer</legend>
@@ -399,7 +486,9 @@ function Viva() {
           </div>
         </fieldset>
         <fieldset className="mt-4" disabled={walk.answer === null || locked}>
-          <legend className="text-sm font-medium text-ink">How sure are you?</legend>
+          <legend className="text-sm font-medium text-ink">
+            {check === "walkthrough" ? "How sure did you sound?" : "How sure are you?"}
+          </legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {CONFIDENCE.map((c) => (
               <button
@@ -443,7 +532,7 @@ function Viva() {
 }
 
 function OutcomeNote({ outcome, walk }: { outcome: Outcome; walk: WalkState }) {
-  const delegated = walk.draft === "delegate";
+  const delegated = walk.draft === "delegate" || walk.draft === "checks";
   return (
     <div className="rounded-xl border border-line bg-paper-2 p-4 text-sm">
       <p className="font-display text-xl text-ink">{OUTCOME[outcome].label}</p>
@@ -451,8 +540,9 @@ function OutcomeNote({ outcome, walk }: { outcome: Outcome; walk: WalkState }) {
       <p className="mt-2 text-muted">{QUESTION.why}</p>
       {delegated ? (
         <p className="mt-2 text-muted">
-          You handed the draft to the agent and never read the loop. Whatever you answered, you were
-          answering about code you had not seen.
+          {walk.draft === "checks"
+            ? "You wrote the checks but never read the session. You knew what the change had to do, not how it did it."
+            : "You handed the draft to the agent and never read the loop. Whatever you answered, you were answering about code you had not seen."}
         </p>
       ) : null}
     </div>
@@ -503,7 +593,9 @@ function Merge() {
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted">
-        You are the reviewer. The author's answer was{" "}
+        {walk.setup.mode === "factory"
+          ? "The gate is green and your approval is pending. The answer was"
+          : "You are the reviewer. The author's answer was"}{" "}
         <span className="font-medium text-ink">
           {outcome ? OUTCOME[outcome].label.toLowerCase() : "not given"}
         </span>
@@ -533,33 +625,56 @@ function MapStation() {
   const choose = useViva((s) => s.choose);
   const outcome = vivaOutcome(walk) ?? "thin";
   const rows = [{ topic: MAP_TOPIC, outcome, checks: 1, fresh: true }, ...MAP_HISTORY];
+  const journal = walk.setup.record === "journal";
   return (
     <div className="grid gap-4">
-      <Panel label="Your map">
-        <ul className="mt-2 grid gap-2">
-          {rows.map((r) => (
-            <li
-              key={r.topic}
-              className={
-                "flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm " +
-                ("fresh" in r ? "border-ink" : "border-line")
-              }
-            >
-              <span className="text-ink">
-                {r.topic}
-                {"fresh" in r ? (
-                  <span className="ml-2 font-mono text-xs text-accent">new</span>
-                ) : null}
-              </span>
-              <span className="font-mono text-xs text-muted">
-                {OUTCOME[r.outcome].label} · {r.checks} {r.checks === 1 ? "check" : "checks"}
-              </span>
+      {journal ? (
+        <Panel label="Your learning log">
+          <ul className="mt-2 grid gap-2 text-sm">
+            <li className="border border-ink px-3 py-2 text-ink">
+              #212:{" "}
+              {outcome === "solid"
+                ? "explained why the retry reuses the same key."
+                : "had to ask why the retry reuses the same key."}
+              <span className="ml-2 font-mono text-xs text-accent">new</span>
             </li>
-          ))}
-        </ul>
-      </Panel>
+            {JOURNAL.map((line) => (
+              <li key={line} className="border border-line px-3 py-2 text-muted">
+                {line}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted">
+            Written by the person, one line per PR. Nothing is generated or scored.
+          </p>
+        </Panel>
+      ) : (
+        <Panel label="Your map">
+          <ul className="mt-2 grid gap-2">
+            {rows.map((r) => (
+              <li
+                key={r.topic}
+                className={
+                  "flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm " +
+                  ("fresh" in r ? "border-ink" : "border-line")
+                }
+              >
+                <span className="text-ink">
+                  {r.topic}
+                  {"fresh" in r ? (
+                    <span className="ml-2 font-mono text-xs text-accent">new</span>
+                  ) : null}
+                </span>
+                <span className="font-mono text-xs text-muted">
+                  {OUTCOME[r.outcome].label} · {r.checks} {r.checks === 1 ? "check" : "checks"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
       <Choices
-        legend="Who can see this map?"
+        legend={journal ? "Who can see this log?" : "Who can see this map?"}
         options={MAP_CHOICES}
         value={walk.map}
         onChoose={(id) => choose("map", "map", id)}
@@ -575,24 +690,28 @@ function Loop() {
   const choose = useViva((s) => s.choose);
   const setView = useViva((s) => s.setView);
   const outcome = vivaOutcome(walk);
+  const { mode, record } = walk.setup;
+  const where = record === "map" ? "map" : record === "journal" ? "log" : null;
+  const intro = !where
+    ? "Nothing was kept, so the next step comes from the review itself: idempotency took the longest to explain. Pick a next step."
+    : outcome === "solid"
+      ? `Idempotent retries is solid. The thinnest area on your ${where} is auth token refresh. Pick a next step for that.`
+      : `Idempotent retries is the thinnest area on your ${where}. Pick a next step.`;
   return (
     <div className="grid gap-4">
-      <p className="text-sm text-muted">
-        {outcome === "solid"
-          ? "Idempotent retries is solid. The thinnest area on your map is auth token refresh. Pick a next step for that."
-          : "Idempotent retries is the thinnest area on your map. Pick a next step."}
-      </p>
+      <p className="text-sm text-muted">{intro}</p>
       <Choices
         legend="What next?"
-        options={LOOP_CHOICES}
+        options={mode === "factory" ? FACTORY_LOOP_CHOICES : LOOP_CHOICES}
         value={walk.loop}
         onChoose={(id) => choose("loop", "loop", id)}
       />
       {walk.loop ? (
         <div className="rounded-xl border border-line bg-pass-bg p-4 text-sm text-pass">
           <p>
-            The loop is closed. The next change in that area is one you can defend. That is the
-            whole idea: many small questions, a private picture, and a next step you choose.
+            The loop is closed. The next change in that area is one someone can defend. That is the
+            whole idea, with or without the extra checks: whoever posts or merges a change can
+            explain it, and a thin area leads to a next step.
           </p>
           <button
             type="button"

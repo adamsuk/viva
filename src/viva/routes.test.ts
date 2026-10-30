@@ -17,6 +17,15 @@ test("sections in the guide have anchors", () => {
 });
 
 test("hashes round trip", () => {
-  for (const h of ["", "#walk", "#guide", "#parts", "#evidence", "#prior-art", "#audit"])
+  for (const h of [
+    "",
+    "#walk",
+    "#guide",
+    "#parts",
+    "#evidence",
+    "#prior-art",
+    "#variations",
+    "#audit",
+  ])
     assert.equal(hashFor(routeFromHash(h)), h);
 });

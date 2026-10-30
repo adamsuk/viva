@@ -16,7 +16,7 @@ What changed and why: [CHANGELOG.md](CHANGELOG.md). Every PR adds an entry; see 
 | [docs/recommendations.md](docs/recommendations.md) | What to do, labelled Best practice or Cutting edge |
 | [docs/prior-art.md](docs/prior-art.md) | Tools that already exist, and the gaps they leave |
 | [EXPERIMENTS.md](EXPERIMENTS.md) | Open questions and the log of tests to run |
-| [src/viva/model.ts](src/viva/model.ts) | The source for all of the above: stations, the PR, sources, claims, recommendations, tools |
+| [src/viva/model.ts](src/viva/model.ts) | The source for all of the above: stations, the PR, sources, claims, recommendations, tools, the setup options and the factory notes |
 | [src/viva/store.ts](src/viva/store.ts) | How the PR advances, and what gets sent back |
 | [src/viva/self-audit.ts](src/viva/self-audit.ts) | Audit your team: the questions, their covered, partial and gap rules, and the scoring |
 | [src/viva/machine.ts](src/viva/machine.ts) | guide.json, llms.txt and llms-full.txt, and the read-only audit prompt |
@@ -37,6 +37,32 @@ The docs are generated from the model by `npm run docs`, and a test fails if the
 8. **Return**: A thin area becomes the next thing to learn: pairing, a change by hand, a short read.
 
 Try forwarding the bot comment that describes a loop that never ends. It does end. That is the point.
+
+## Without the product idea
+
+The follow-up check (station 5) and the map (station 7) are Viva's own idea, and nothing has tested them yet. Set them at the top of the walk:
+
+| Station | Options |
+|---|---|
+| 5. Follow-up check | A viva question. A five-minute walkthrough, no agent open. Or none: the station is N/A. |
+| 7. What is kept | A private map, which needs a follow-up check to feed it. A learning log the person writes themselves. Or none: the station is N/A. |
+
+With both set to none, stations 1 to 4 and 8 still hold. Authors write their own descriptions, bot comments get checked, and approval means the reviewer could explain the change. That is the Start stage below. The team audit offers N/A on the questions about these two ideas, and N/A is left out of the score.
+
+## Inside a software factory
+
+The walk can run inside a factory as defined by [Line](https://github.com/adamsuk/line): agents build from work orders, and people plan and approve. The PR walks the same eight stations, but the author is an agent. The person who has to defend the change is whoever wrote the work order and whoever approves it.
+
+| Station | Beside Line's | What changes |
+|---|---|---|
+| 1. Draft | Backlog and Bench | No one learns at the keyboard. Understanding comes from writing the checks that mean done, and from reading the agent's session. A vague work order is sent back. |
+| 2. Post | Gate | The agent's description is expected, but it must be an evidence record (agreed behaviour, checks that ran on this commit, behaviour nobody asked for, how far a mistake reaches), not a claim of done. |
+| 3. Bot review | Review | Review-agent comments are staged after the gate. Sending one back to the building agent still needs a person who could defend it. |
+| 4. Review | Review | Agents open PRs faster than people read, so approval drift is the bigger risk. The reviewer reads the session as well as the diff. |
+| 5. Follow-up | Review, before approval | The check goes to the approver and the work order owner. It is never a required gate check, because a question a model can answer is easy to fake. |
+| 6. Merge | Gate and Artifact | Merge rests on the gate's checks and a named approval. An answer can hold up approval for a conversation. |
+| 7. Map | Return | The factory's version is a topic view, the areas of its output nobody can explain, never a view of people. |
+| 8. Return | Return | A thin area becomes a work order: route changes there to a person, or have a person build the next one. |
 
 ## Bringing checks in
 

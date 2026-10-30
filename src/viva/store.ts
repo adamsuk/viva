@@ -4,6 +4,11 @@
 import { create } from "zustand";
 import {
   BOT_COMMENTS,
+  DEFAULT_SETUP,
+  FACTORY_DRAFT_CHOICES,
+  FACTORY_POST_SENT_BACK,
+  notApplicable,
+  type Setup,
   MAP_CHOICES,
   MERGE_CHOICES,
   QUESTION,
@@ -27,6 +32,8 @@ import {
 import type { Anchor, View } from "./routes.ts";
 
 export interface WalkState {
+  /** How the walk is set up. Kept when choices are cleared; changing it starts the walk again. */
+  setup: Setup;
   draft: DraftChoice | null;
   post: PostChoice | null;
   triage: Record<string, Triage>;
@@ -39,6 +46,7 @@ export interface WalkState {
 }
 
 export const EMPTY_WALK: WalkState = {
+  setup: DEFAULT_SETUP,
   draft: null,
   post: null,
   triage: {},
@@ -71,11 +79,14 @@ export function clearAfter(walk: WalkState, station: StationId): WalkState {
 }
 
 export function stationDone(walk: WalkState, id: StationId): boolean {
+  if (notApplicable(id, walk.setup)) return true;
   switch (id) {
     case "draft":
-      return walk.draft !== null;
+      return (
+        walk.draft !== null && !FACTORY_DRAFT_CHOICES.find((c) => c.id === walk.draft)?.sentBack
+      );
     case "post":
-      return walk.post === "own";
+      return walk.post === "own" || walk.post === "record";
     case "bot":
       return BOT_COMMENTS.every((c) => walk.triage[c.id] === c.correct);
     case "review":
@@ -116,12 +127,16 @@ interface Store {
   advance: () => void;
   choose: <K extends keyof WalkState>(station: StationId, key: K, value: WalkState[K]) => void;
   triage: (comment: string, value: Triage) => void;
+  configure: (setup: Partial<Setup>) => void;
   clearNotice: () => void;
   reset: () => void;
 }
 
 function sentBackFor(station: StationId, walk: WalkState): string | null {
+  if (station === "draft")
+    return FACTORY_DRAFT_CHOICES.find((c) => c.id === walk.draft)?.sentBack ?? null;
   if (station === "post" && walk.post === "agent") return POST_SENT_BACK;
+  if (station === "post" && walk.post === "claim") return FACTORY_POST_SENT_BACK;
   if (station === "review" && walk.review === "stamp") return REVIEW_SENT_BACK;
   if (station === "merge") return MERGE_CHOICES.find((c) => c.id === walk.merge)?.sentBack ?? null;
   if (station === "map") return MAP_CHOICES.find((c) => c.id === walk.map)?.sentBack ?? null;
@@ -153,6 +168,19 @@ export const useViva = create<Store>((set, get) => ({
     const cleared = clearAfter(get().walk, "bot");
     set({ walk: { ...cleared, triage: { ...cleared.triage, [comment]: value } }, notice: null });
   },
+  configure: (change) => {
+    const setup = { ...get().walk.setup, ...change };
+    // A map is built from answers, so it needs a follow-up check to feed it.
+    if (setup.check === "none" && setup.record === "map") setup.record = "journal";
+    set({ walk: { ...EMPTY_WALK, setup }, focus: "draft", notice: null });
+  },
   clearNotice: () => set({ notice: null }),
-  reset: () => set({ view: "walk", anchor: null, focus: "draft", walk: EMPTY_WALK, notice: null }),
+  reset: () =>
+    set((s) => ({
+      view: "walk",
+      anchor: null,
+      focus: "draft",
+      walk: { ...EMPTY_WALK, setup: s.walk.setup },
+      notice: null,
+    })),
 }));
