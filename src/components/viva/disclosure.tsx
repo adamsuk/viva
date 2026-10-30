@@ -14,14 +14,15 @@ export function Disclosure({
 }) {
   return (
     <details className={"group " + className}>
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-steel [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
         <span
           aria-hidden="true"
-          className="inline-block w-5 text-xl leading-none text-steel transition-transform duration-150 group-open:rotate-90"
+          className="inline-flex h-6 w-6 items-center justify-center border border-ink font-mono text-sm leading-none text-ink"
         >
-          ▸
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">−</span>
         </span>
-        <h2 id={id} className="font-display text-2xl text-ink">
+        <h2 id={id} className="font-display text-2xl text-ink italic">
           {title}
         </h2>
         <span aria-hidden="true" className="font-mono text-xs text-muted">

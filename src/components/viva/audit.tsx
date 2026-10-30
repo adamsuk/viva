@@ -51,7 +51,10 @@ export function AuditTeam() {
       aria-labelledby="audit-heading"
       className="scroll-mt-4 border-t border-line pt-8"
     >
-      <h2 id="audit-heading" className="font-display text-3xl text-ink">
+      <h2
+        id="audit-heading"
+        className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+      >
         Audit your team
       </h2>
       <p className="mt-2 max-w-2xl text-base text-muted">
@@ -67,7 +70,7 @@ export function AuditTeam() {
             <button
               type="button"
               onClick={() => setAnswers({})}
-              className="min-h-11 rounded-md px-1 font-medium text-steel underline underline-offset-4 hover:text-steel-2"
+              className="min-h-11 rounded-md px-1 font-medium text-accent underline underline-offset-4 hover:text-accent-2"
             >
               Clear answers
             </button>
@@ -132,8 +135,8 @@ function Question({
             <label
               key={a}
               className={
-                "flex min-h-11 cursor-pointer gap-2 rounded-lg border p-2.5 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-steel " +
-                (answer === a ? TONE[a] : "border-line hover:border-steel")
+                "flex min-h-11 cursor-pointer gap-2 rounded-lg border p-2.5 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent " +
+                (answer === a ? TONE[a] : "border-line hover:border-accent")
               }
             >
               <input
@@ -142,7 +145,7 @@ function Question({
                 value={a}
                 checked={answer === a}
                 onChange={() => onAnswer(q.id, a)}
-                className="mt-0.5 accent-steel"
+                className="mt-0.5 accent-accent"
               />
               <span>
                 <span className="font-medium text-ink">{ANSWER_LABEL[a]}. </span>
@@ -163,7 +166,7 @@ function GapLinks({ q }: { q: AuditQuestion }) {
   const items = RECOMMENDATIONS.filter((r) => ids.includes(r.id));
   return (
     <details className="group mt-3" open>
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-medium text-steel [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-medium text-accent [&::-webkit-details-marker]:hidden">
         <span aria-hidden="true" className="transition-transform duration-150 group-open:rotate-90">
           ▸
         </span>

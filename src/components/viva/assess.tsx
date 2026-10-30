@@ -14,7 +14,7 @@ import { MaturityBadge } from "@/components/viva/recommendations";
 const VERSION = guideVersion(changelogSource);
 const PROMPT = auditPrompt(VERSION);
 
-const link = "text-steel underline underline-offset-4 hover:text-steel-2";
+const link = "text-accent underline underline-offset-4 hover:text-accent-2";
 
 /** Point an agent with read-only repo access at the guide, and get a scored gap list back. */
 export function Assess() {
@@ -45,7 +45,7 @@ export function Assess() {
           <button
             type="button"
             onClick={copy}
-            className="min-h-11 rounded-lg px-3 text-sm font-medium text-steel underline-offset-4 hover:underline"
+            className="min-h-11 rounded-lg px-3 text-sm font-medium text-accent underline-offset-4 hover:underline"
           >
             {copied === "done" ? "Copied" : copied === "failed" ? "Select and copy" : "Copy prompt"}
           </button>
@@ -64,7 +64,7 @@ export function Assess() {
       <dl className="mt-3 grid gap-1 text-sm">
         {Object.entries(SCORES).map(([k, v]) => (
           <div key={k} className="flex gap-2">
-            <dt className="w-16 shrink-0 font-mono text-xs text-steel">{k}</dt>
+            <dt className="w-16 shrink-0 font-mono text-xs text-accent">{k}</dt>
             <dd className="text-muted">{v}</dd>
           </div>
         ))}

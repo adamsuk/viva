@@ -11,13 +11,18 @@ export function Home() {
         aria-labelledby="home-headline"
         className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12"
       >
-        <h2 id="home-headline" className="font-display text-4xl leading-tight text-ink sm:text-5xl">
+        <h2
+          id="home-headline"
+          className="font-display text-5xl leading-[1.02] text-ink italic sm:text-7xl"
+        >
           {HOMEPAGE.headline}
         </h2>
-        <p className="mt-4 max-w-3xl font-display text-xl leading-snug text-ink sm:text-2xl">
+        <p className="mt-6 max-w-3xl font-display text-xl leading-snug text-muted sm:text-2xl">
           {HOMEPAGE.thesis}
         </p>
-        <h3 className="mt-8 font-mono text-xs text-muted">Why a viva</h3>
+        <h3 className="mt-10 font-mono text-xs uppercase tracking-[0.18em] text-margin">
+          Why a viva
+        </h3>
         <p className="mt-2 max-w-2xl text-base text-muted">{HOMEPAGE.why}</p>
         <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-2">
           <Cta label="Walk the PR" detail={HOMEPAGE.walk} primary onClick={() => setView("walk")} />
@@ -27,10 +32,12 @@ export function Home() {
             onClick={() => setView("guide", "audit")}
           />
         </div>
-        <h3 className="mt-10 font-mono text-xs text-muted">Where the open ground is</h3>
+        <h3 className="mt-12 font-mono text-xs uppercase tracking-[0.18em] text-margin">
+          Where the open ground is
+        </h3>
         <ul className="mt-2 grid max-w-3xl gap-2 text-sm text-ink">
           {OPEN_GROUND.map((line) => (
-            <li key={line} className="rounded-lg border border-line bg-paper px-3 py-2">
+            <li key={line} className="border-b border-line py-2 pl-1">
               {line}
             </li>
           ))}
@@ -40,7 +47,7 @@ export function Home() {
           <button
             type="button"
             onClick={() => setView("guide", "evidence")}
-            className="text-steel underline underline-offset-4 hover:text-steel-2"
+            className="text-accent underline underline-offset-4 hover:text-accent-2"
           >
             the guide
           </button>
@@ -68,14 +75,16 @@ function Cta({
       type="button"
       onClick={onClick}
       className={
-        "flex min-h-11 flex-col items-start rounded-2xl border p-4 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-steel " +
+        "flex min-h-11 flex-col items-start rounded-2xl border p-4 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent " +
         (primary
-          ? "border-ink bg-ink text-paper hover:bg-steel"
-          : "border-line bg-paper text-ink hover:border-steel")
+          ? "border-accent bg-accent text-on-accent hover:bg-accent-2"
+          : "border-line bg-paper text-ink hover:border-accent")
       }
     >
       <span className="font-display text-xl">{label} →</span>
-      <span className={"mt-1 text-sm " + (primary ? "text-paper/80" : "text-muted")}>{detail}</span>
+      <span className={"mt-1 text-sm " + (primary ? "text-on-accent/85" : "text-muted")}>
+        {detail}
+      </span>
     </button>
   );
 }

@@ -17,7 +17,7 @@ export function ChangelogEntries() {
           href={`${REPO_URL}/blob/main/CHANGELOG.md`}
           target="_blank"
           rel="noreferrer"
-          className="text-ink underline underline-offset-4 hover:text-steel"
+          className="text-ink underline underline-offset-4 hover:text-accent"
         >
           CHANGELOG.md
         </a>
@@ -28,7 +28,7 @@ export function ChangelogEntries() {
       ))}
       {older.length > 0 && (
         <details className="group/older mt-4">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg font-mono text-xs text-steel focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-steel [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg font-mono text-xs text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
             <span
               aria-hidden="true"
               className="inline-block transition-transform duration-150 group-open/older:rotate-90"
@@ -84,7 +84,7 @@ function Rich({ parts }: { parts: Inline[] }) {
               href={resolveHref(p.href, REPO_URL)}
               target="_blank"
               rel="noreferrer"
-              className="text-steel underline underline-offset-4 hover:text-steel-2"
+              className="text-accent underline underline-offset-4 hover:text-accent-2"
             >
               {p.text}
             </a>

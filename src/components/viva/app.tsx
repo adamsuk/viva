@@ -20,63 +20,62 @@ export function VivaApp() {
 
   return (
     <main className="min-h-screen pb-16">
-      <header className="border-b border-line bg-paper/95">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="font-mono text-xs tracking-wide text-muted">
-                AI, code review and understanding
-              </p>
-              <h1 className="font-display text-4xl leading-none text-ink">Viva</h1>
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+      <header className="border-b-2 border-ink bg-paper">
+        <div className="mx-auto flex max-w-6xl flex-col px-4 sm:px-6">
+          <div className="flex items-center justify-between gap-4 border-b border-line py-2 text-xs">
+            <p className="font-mono uppercase tracking-[0.18em] text-muted">
+              An examination of AI in code review
+            </p>
+            <div className="flex shrink-0 items-center gap-1">
               <a
                 href="https://github.com/adamsuk/viva"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-steel underline underline-offset-4 hover:text-steel-2"
+                className="inline-flex min-h-11 items-center px-2 font-medium text-accent underline underline-offset-4 hover:text-accent-2"
               >
-                View on GitHub
+                GitHub
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
               <button
                 type="button"
                 onClick={reset}
-                className="min-h-11 shrink-0 rounded-md px-3 text-sm font-medium text-steel underline-offset-4 hover:underline"
+                className="min-h-11 shrink-0 px-2 font-medium text-accent underline-offset-4 hover:underline"
               >
                 Start over
               </button>
             </div>
           </div>
-          <p className="max-w-2xl text-sm text-muted sm:text-base">
-            Research notes and a guide on AI in code review, what it does to juniors and seniors,
-            and how to check that people understand what they post and merge. One pull request,
-            eight stations. Every claim is labelled by how strong its evidence is.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <nav
-              aria-label="Views"
-              className="grid grid-cols-3 gap-1 rounded-xl bg-paper-2 p-1 sm:flex"
-            >
-              <Seg label="Home" active={view === "home"} onClick={() => setView("home")} />
-              <Seg label="Walk the PR" active={view === "walk"} onClick={() => setView("walk")} />
-              <Seg label="The guide" active={view === "guide"} onClick={() => setView("guide")} />
-            </nav>
-            <p className="font-mono text-xs tabular-nums text-faint">
-              PR #212 · {count} of 8 stations done
+          <div className="grid gap-3 py-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-end sm:gap-8">
+            <h1 className="font-display text-6xl leading-[0.85] text-ink italic sm:text-7xl">
+              Viva<span className="text-margin">.</span>
+            </h1>
+            <p className="max-w-2xl text-sm text-muted sm:pb-1 sm:text-base">
+              Research notes and a guide on AI in code review, what it does to juniors and seniors,
+              and how to check that people understand what they post and merge. One pull request,
+              eight stations, every claim graded by the strength of its evidence.
             </p>
           </div>
-          {notice ? (
-            <button
-              type="button"
-              onClick={clearNotice}
-              className="rounded-lg border border-line bg-hold-bg px-4 py-3 text-left text-sm text-ink"
-            >
-              {notice}
-            </button>
-          ) : null}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <nav aria-label="Views" className="-mb-0.5 flex gap-4 sm:gap-6">
+              <Tab label="Home" active={view === "home"} onClick={() => setView("home")} />
+              <Tab label="Walk the PR" active={view === "walk"} onClick={() => setView("walk")} />
+              <Tab label="The guide" active={view === "guide"} onClick={() => setView("guide")} />
+            </nav>
+            <Progress count={count} />
+          </div>
         </div>
       </header>
+      {notice ? (
+        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+          <button
+            type="button"
+            onClick={clearNotice}
+            className="w-full border-l-4 border-margin bg-fail-bg px-4 py-3 text-left text-sm text-ink"
+          >
+            {notice}
+          </button>
+        </div>
+      ) : null}
 
       {view === "home" ? (
         <Home />
@@ -94,19 +93,39 @@ export function VivaApp() {
   );
 }
 
-function Seg({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function Tab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
       className={
-        "min-h-11 whitespace-nowrap rounded-lg px-2 text-sm font-medium transition-colors duration-150 sm:px-4 " +
-        (active ? "bg-ink text-paper" : "text-muted hover:text-ink")
+        "min-h-11 whitespace-nowrap border-b-[3px] text-sm font-medium transition-colors duration-150 " +
+        (active ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink")
       }
     >
       {label}
     </button>
+  );
+}
+
+/** Eight boxes, one per station, ticked as the PR clears them. */
+function Progress({ count }: { count: number }) {
+  return (
+    <div className="flex items-center gap-2 pb-3 sm:pb-2.5">
+      <span className="font-mono text-xs tabular-nums text-faint">PR #212</span>
+      <span aria-hidden="true" className="flex gap-1">
+        {Array.from({ length: 8 }, (_, i) => (
+          <span
+            key={i}
+            className={
+              "h-3 w-3 border " + (i < count ? "border-accent bg-accent" : "border-line bg-paper")
+            }
+          />
+        ))}
+      </span>
+      <span className="sr-only">{count} of 8 stations done</span>
+    </div>
   );
 }
 
@@ -130,7 +149,7 @@ function BuiltOn() {
                 >
                   {ref.title}
                 </a>
-                <p className="mt-1 text-sm text-steel">{ref.author}</p>
+                <p className="mt-1 text-sm text-accent">{ref.author}</p>
                 <p className="mt-2 text-sm text-muted">{ref.took}</p>
               </li>
             ))}
@@ -151,7 +170,7 @@ function BuiltOn() {
                       href={ref.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-ink underline underline-offset-4 hover:text-steel"
+                      className="text-ink underline underline-offset-4 hover:text-accent"
                     >
                       {ref.title}
                     </a>
@@ -187,7 +206,7 @@ function LastUpdated() {
             href={commitUrl(info.sha)}
             target="_blank"
             rel="noreferrer"
-            className="underline underline-offset-4 hover:text-steel"
+            className="underline underline-offset-4 hover:text-accent"
           >
             {shortSha(info.sha)}
           </a>

@@ -29,12 +29,17 @@ export function Stage() {
   const station = stationById(focus);
 
   return (
-    <article className="rounded-2xl border border-line bg-paper p-4 sm:p-6">
-      <p className="font-mono text-xs text-muted">
-        {station.index} · {station.part} · {station.owner}
+    <article className="border border-line border-t-4 border-t-ink bg-paper p-4 sm:p-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
+          Question {Number(station.index)} of 8 · {station.part}
+        </p>
+        <p className="font-mono text-xs text-faint">Answered by: {station.owner}</p>
+      </div>
+      <h2 className="mt-4 font-display text-4xl text-ink sm:text-5xl">{station.name}</h2>
+      <p className="mt-3 max-w-2xl font-display text-xl leading-snug text-muted italic">
+        {station.thesis}
       </p>
-      <h2 className="mt-1 font-display text-3xl text-ink sm:text-4xl">{station.name}</h2>
-      <p className="mt-3 max-w-2xl text-base text-ink">{station.thesis}</p>
 
       <div className="mt-6">
         {focus === "draft" && <Draft />}
@@ -47,9 +52,9 @@ export function Stage() {
         {focus === "loop" && <Loop />}
       </div>
 
-      <aside className="mt-6 rounded-xl border border-line bg-paper-2 p-4">
-        <p className="font-mono text-xs text-muted">What this station is for</p>
-        <p className="mt-2 text-sm text-ink">{station.lesson}</p>
+      <aside className="mt-8 border-l-4 border-margin bg-paper-2 p-4">
+        <p className="font-display text-lg italic text-margin">Examiner's note</p>
+        <p className="mt-1 font-display text-lg leading-snug text-ink">{station.lesson}</p>
         {station.sources ? <Sources ids={station.sources} /> : null}
       </aside>
 
@@ -69,11 +74,11 @@ function GuidePanel({ id }: { id: StationId }) {
       </div>
       <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
         <div>
-          <dt className="font-medium text-steel">AI</dt>
+          <dt className="font-medium text-accent">AI</dt>
           <dd className="mt-1 text-ink">{guide.ai}</dd>
         </div>
         <div>
-          <dt className="font-medium text-steel">Human in the loop</dt>
+          <dt className="font-medium text-accent">Human in the loop</dt>
           <dd className="mt-1 text-ink">{guide.human}</dd>
         </div>
       </dl>
@@ -92,7 +97,7 @@ function GuidePanel({ id }: { id: StationId }) {
 
 export function StageBadge({ stage }: { stage: string }) {
   return (
-    <span className="rounded-md bg-paper-2 px-2 py-1 font-mono text-xs text-ink">
+    <span className="border border-ink px-2 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-ink">
       {stage === "Start" ? "Start here" : stage}
     </span>
   );
@@ -108,7 +113,7 @@ function Continue({ id }: { id: StationId }) {
       <button
         type="button"
         onClick={advance}
-        className="min-h-11 rounded-md bg-steel px-4 text-sm font-medium text-on-steel"
+        className="min-h-11 rounded-md bg-accent px-4 text-sm font-medium text-on-accent"
       >
         Continue to {stationById(next).name.toLowerCase()}
       </button>
@@ -148,14 +153,12 @@ function Choices<T extends string>({
                 (back
                   ? "border-fail bg-fail-bg text-ink"
                   : selected
-                    ? "border-ink bg-ink text-paper"
+                    ? "border-accent bg-accent-bg text-ink"
                     : "border-line bg-paper text-ink hover:border-ink")
               }
             >
               <span className="text-sm font-medium">{o.label}</span>
-              <span
-                className={"mt-1 text-sm " + (selected && !back ? "text-paper/80" : "text-muted")}
-              >
+              <span className={"mt-1 text-sm " + (selected && !back ? "text-muted" : "text-muted")}>
                 {o.detail}
               </span>
               {back ? <span className="mt-2 font-mono text-xs text-fail">Sent back</span> : null}
@@ -170,7 +173,7 @@ function Choices<T extends string>({
 function Panel({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-line p-4">
-      <p className="font-mono text-xs text-steel">{label}</p>
+      <p className="font-mono text-xs text-accent">{label}</p>
       {children}
     </div>
   );
@@ -178,7 +181,7 @@ function Panel({ label, children }: { label: string; children: ReactNode }) {
 
 function Diff({ highlight }: { highlight?: string }) {
   return (
-    <pre className="mt-3 overflow-x-auto rounded-lg bg-ink p-3 font-mono text-xs leading-relaxed text-paper">
+    <pre className="mt-3 overflow-x-auto rounded-md bg-code p-3 font-mono text-xs leading-relaxed text-code-ink">
       {DIFF.map((l, i) => (
         <div
           key={i}
@@ -187,7 +190,8 @@ function Diff({ highlight }: { highlight?: string }) {
               ? "text-[#b9e3c6]"
               : l.kind === "del"
                 ? "text-[#f0b8b0]"
-                : "text-paper/70") + (highlight && l.text.includes(highlight) ? " bg-paper/15" : "")
+                : "text-code-ink/60") +
+            (highlight && l.text.includes(highlight) ? " bg-code-ink/15" : "")
           }
         >
           {l.kind === "add" ? "+ " : l.kind === "del" ? "- " : "  "}
@@ -299,7 +303,7 @@ function Bot() {
                   className={
                     "min-h-11 rounded-md border px-4 text-sm font-medium " +
                     (t === v
-                      ? "border-ink bg-ink text-paper"
+                      ? "border-accent bg-accent-bg text-ink"
                       : "border-line text-ink hover:border-ink")
                   }
                 >
@@ -407,7 +411,7 @@ function Viva() {
                 className={
                   "min-h-11 rounded-md border px-4 text-sm font-medium disabled:opacity-50 " +
                   (walk.confidence === c.id
-                    ? "border-ink bg-ink text-paper"
+                    ? "border-accent bg-accent-bg text-ink"
                     : "border-line text-ink hover:border-ink")
                 }
               >
@@ -427,7 +431,7 @@ function Viva() {
               choose("viva", "confidence", null);
               choose("viva", "answer", null);
             }}
-            className="justify-self-start text-sm text-steel underline underline-offset-4"
+            className="justify-self-start text-sm text-accent underline underline-offset-4"
           >
             Answer again
           </button>
@@ -472,12 +476,14 @@ function ConfidenceGrid({ outcome }: { outcome: Outcome }) {
             key={g.outcome}
             className={
               "rounded-lg border p-3 text-sm " +
-              (g.outcome === outcome ? "border-ink bg-ink text-paper" : "border-line text-ink")
+              (g.outcome === outcome
+                ? "border-accent bg-accent-bg text-ink"
+                : "border-line text-ink")
             }
           >
             <p
               className={
-                "font-mono text-xs " + (g.outcome === outcome ? "text-paper/70" : "text-faint")
+                "font-mono text-xs " + (g.outcome === outcome ? "text-accent" : "text-faint")
               }
             >
               {g.row} · {g.col}
@@ -542,7 +548,7 @@ function MapStation() {
               <span className="text-ink">
                 {r.topic}
                 {"fresh" in r ? (
-                  <span className="ml-2 font-mono text-xs text-steel">new</span>
+                  <span className="ml-2 font-mono text-xs text-accent">new</span>
                 ) : null}
               </span>
               <span className="font-mono text-xs text-muted">
@@ -591,7 +597,7 @@ function Loop() {
           <button
             type="button"
             onClick={() => setView("guide", "audit")}
-            className="mt-3 min-h-11 rounded-md bg-steel px-4 text-sm font-medium text-on-steel"
+            className="mt-3 min-h-11 rounded-md bg-accent px-4 text-sm font-medium text-on-accent"
           >
             Now audit your team
           </button>

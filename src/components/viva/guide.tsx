@@ -28,7 +28,10 @@ export function Guide() {
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-6 sm:px-6">
       <section aria-labelledby="stages-heading">
-        <h2 id="stages-heading" className="font-display text-3xl text-ink">
+        <h2
+          id="stages-heading"
+          className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+        >
           Bringing checks in
         </h2>
         <p className="mt-2 max-w-2xl text-base text-muted">
@@ -47,7 +50,10 @@ export function Guide() {
       </section>
 
       <section aria-labelledby="loop-heading">
-        <h2 id="loop-heading" className="font-display text-3xl text-ink">
+        <h2
+          id="loop-heading"
+          className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+        >
           Where people stay in the loop
         </h2>
         <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-paper">
@@ -94,7 +100,10 @@ function Recommendations() {
   const items = RECOMMENDATIONS.filter((r) => filter === "All" || r.maturity === filter);
   return (
     <section aria-labelledby="recs-heading">
-      <h2 id="recs-heading" className="font-display text-3xl text-ink">
+      <h2
+        id="recs-heading"
+        className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+      >
         Recommendations, labelled
       </h2>
       <p className="mt-2 max-w-2xl text-base text-muted">
@@ -113,7 +122,9 @@ function Recommendations() {
             onClick={() => setFilter(f)}
             className={
               "min-h-11 rounded-lg px-3 text-sm font-medium " +
-              (filter === f ? "bg-ink text-paper" : "bg-paper-2 text-muted hover:text-ink")
+              (filter === f
+                ? "bg-accent text-on-accent"
+                : "border border-line text-muted hover:text-ink")
             }
           >
             {f} (
@@ -134,7 +145,10 @@ function Recommendations() {
 function Evidence() {
   return (
     <section id="evidence" aria-labelledby="evidence-heading" className="scroll-mt-4">
-      <h2 id="evidence-heading" className="font-display text-3xl text-ink">
+      <h2
+        id="evidence-heading"
+        className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+      >
         The evidence
       </h2>
       <p className="mt-2 max-w-2xl text-base text-muted">
@@ -146,7 +160,7 @@ function Evidence() {
       </div>
       {CLAIM_TOPICS.map((topic) => (
         <section key={topic} aria-label={topic} className="mt-6">
-          <h3 className="font-mono text-xs text-muted">{topic}</h3>
+          <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-margin">{topic}</h3>
           <ul className="mt-2 grid gap-3 lg:grid-cols-2">
             {CLAIMS.filter((c) => c.topic === topic).map((c) => (
               <li key={c.id} className="rounded-xl border border-line bg-paper p-3">
@@ -166,7 +180,10 @@ function Evidence() {
 function PriorArt() {
   return (
     <section id="prior-art" aria-labelledby="prior-art-heading" className="scroll-mt-4">
-      <h2 id="prior-art-heading" className="font-display text-3xl text-ink">
+      <h2
+        id="prior-art-heading"
+        className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+      >
         Prior art
       </h2>
       <p className="mt-2 max-w-2xl text-base text-muted">
@@ -186,13 +203,15 @@ function PriorArt() {
             </a>
             <p className="mt-2 text-sm text-ink">{t.what}</p>
             <p className="mt-2 text-sm text-muted">
-              <span className="font-medium text-steel">Evidence. </span>
+              <span className="font-medium text-accent">Evidence. </span>
               {t.evidence}
             </p>
           </li>
         ))}
       </ul>
-      <h3 className="mt-6 font-mono text-xs text-muted">Gaps no tool covers yet</h3>
+      <h3 className="mt-6 font-mono text-xs uppercase tracking-[0.18em] text-margin">
+        Gaps no tool covers yet
+      </h3>
       <ul className="mt-2 grid gap-2 text-sm">
         {Object.entries(GAPS).map(([id, gap]) => (
           <li key={id} className="rounded-lg border border-line bg-paper px-3 py-2 text-ink">
@@ -208,7 +227,10 @@ function PriorArt() {
 function OpenQuestions() {
   return (
     <section aria-labelledby="open-heading">
-      <h2 id="open-heading" className="font-display text-3xl text-ink">
+      <h2
+        id="open-heading"
+        className="border-t-2 border-ink pt-3 font-display text-4xl text-ink italic"
+      >
         Open questions and experiments
       </h2>
       <ol className="mt-4 grid max-w-3xl list-decimal gap-2 pl-5 text-sm text-ink marker:text-faint">

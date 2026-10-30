@@ -12,11 +12,12 @@ import {
 } from "@/viva/model";
 
 export function MaturityBadge({ maturity }: { maturity: Maturity }) {
-  const tone = maturity === "Best practice" ? "bg-pass-bg text-pass" : "bg-hold-bg text-hold";
+  const tone = maturity === "Best practice" ? "text-pass" : "text-hold";
   return (
     <span
       className={
-        "inline-block shrink-0 whitespace-nowrap rounded-md px-2 py-0.5 font-mono text-xs " + tone
+        "inline-block shrink-0 whitespace-nowrap border border-current px-1.5 py-px font-mono text-[0.68rem] uppercase tracking-[0.12em] " +
+        tone
       }
     >
       {maturity}
@@ -40,18 +41,18 @@ export function MaturityLegend() {
 }
 
 const STRENGTH_TONE: Record<Strength, string> = {
-  Strong: "bg-pass-bg text-pass",
-  Moderate: "bg-paper-2 text-steel",
-  Weak: "bg-hold-bg text-hold",
-  Opinion: "bg-paper-2 text-muted",
-  Gap: "bg-fail-bg text-fail",
+  Strong: "text-pass",
+  Moderate: "text-accent",
+  Weak: "text-hold",
+  Opinion: "text-muted",
+  Gap: "text-fail",
 };
 
 export function StrengthBadge({ strength }: { strength: Strength }) {
   return (
     <span
       className={
-        "inline-block shrink-0 whitespace-nowrap rounded-md px-2 py-0.5 font-mono text-xs " +
+        "inline-block shrink-0 whitespace-nowrap border border-current px-1.5 py-px font-mono text-[0.68rem] uppercase tracking-[0.12em] " +
         STRENGTH_TONE[strength]
       }
     >
@@ -88,7 +89,7 @@ export function Sources({ ids }: { ids: ReferenceId[] }) {
               href={ref.url}
               target="_blank"
               rel="noreferrer"
-              className="text-steel underline underline-offset-4 hover:text-steel-2"
+              className="text-accent underline underline-offset-4 hover:text-accent-2"
             >
               {ref.title}
             </a>{" "}
@@ -113,7 +114,7 @@ export function RecommendationList({
   return (
     <ul className="grid gap-3">
       {items.map((r) => (
-        <li key={r.id} className="rounded-xl border border-line p-3">
+        <li key={r.id} className="border-l-2 border-accent/40 py-1 pl-4">
           <div className="flex flex-wrap items-center gap-2">
             <MaturityBadge maturity={r.maturity} />
             <span className="font-mono text-xs text-faint">
@@ -146,7 +147,7 @@ export function ToolList({ id }: { id: string }) {
             href={tool.url}
             target="_blank"
             rel="noreferrer"
-            className="text-steel underline underline-offset-4 hover:text-steel-2"
+            className="text-accent underline underline-offset-4 hover:text-accent-2"
           >
             {tool.name}
           </a>

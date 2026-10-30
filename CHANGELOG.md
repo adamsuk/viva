@@ -18,6 +18,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ### Changed
 
+- A visual identity of its own, so Viva no longer reads as a copy of Line. It is styled as an exam booklet: ruled ivory paper, a red margin rule, and blue examiner's ink as the accent, set in Newsreader and Schibsted Grotesk. The header is a masthead with underline tabs and eight tick boxes for progress. Stations are a numbered question index, each lesson is an "Examiner's note", and labels are outlined stamps. Corners are flat and there is a dark mode. Why: Scott asked for a style that is not a carbon copy of Line.
 - The confidence-weighted testing claim now cites its authors, Sparck, Bjork and Bjork (2016). It was attributed to "Little et al.", whose earlier work it builds on. Source: [On the learning benefits of confidence-weighted testing](https://doi.org/10.1186/s41235-016-0003-x).
 - The review-agent claim now says what the paper measured: 12 of 13 agents had an average signal ratio below 60%, and agent-only PRs merged at 45% against 68% for human-only review. It said "actionable comments" and "human comments were addressed far more often", which the paper does not report. Source: [arXiv 2604.03196](https://arxiv.org/abs/2604.03196).
 - The METR follow-up claim now quotes METR's own post: it could not measure the effect reliably and calls its evidence very weak. Secondary write-ups had cited an 18% speedup that METR did not report. Source: [We are Changing our Developer Productivity Experiment Design](https://metr.org/blog/2026-02-24-uplift-update/).
