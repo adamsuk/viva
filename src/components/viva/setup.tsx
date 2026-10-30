@@ -1,5 +1,7 @@
 import { CHECK_METHODS, MODES, RECORD_METHODS, type Setup } from "@/viva/model";
 import { useViva } from "@/viva/store";
+import { StrengthBadge } from "@/components/viva/recommendations";
+import type { Strength } from "@/viva/model";
 
 /** How the walk is set up: who builds, and which of Viva's own ideas a team uses, if any. */
 export function SetupPanel() {
@@ -39,9 +41,9 @@ export function SetupPanel() {
         />
       </div>
       <p className="border-t border-line px-4 py-2 text-xs text-muted">
-        The follow-up check and the map are Viva's own product idea, and untested. Swap them for
-        something else or leave them out: the rest of the walk still holds. Changing the setup
-        starts the walk again.
+        The follow-up check and the map are Viva's own product idea, and untested. Each option
+        carries the strength of the evidence behind it. Swap them for something else or leave them
+        out: the rest of the walk still holds. Changing the setup starts the walk again.
       </p>
     </details>
   );
@@ -55,7 +57,7 @@ function Options<T extends Setup[keyof Setup]>({
   disabled,
 }: {
   legend: string;
-  options: { id: T; label: string; detail: string }[];
+  options: { id: T; label: string; detail: string; strength?: Strength }[];
   value: T;
   onChoose: (id: T) => void;
   disabled?: (id: T) => boolean;
@@ -91,6 +93,11 @@ function Options<T extends Setup[keyof Setup]>({
                 <span className="text-muted">
                   {off ? "Needs a follow-up check to feed it." : o.detail}
                 </span>
+                {o.strength ? (
+                  <span className="ml-1 inline-block align-middle">
+                    <StrengthBadge strength={o.strength} />
+                  </span>
+                ) : null}
               </span>
             </label>
           );

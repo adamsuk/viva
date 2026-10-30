@@ -500,19 +500,30 @@ export const MODES: { id: Mode; label: string; detail: string }[] = [
   },
 ];
 
-export const CHECK_METHODS: {
+/** How strong the evidence is for an option or a factory note, and what it rests on. */
+export interface Basis {
+  strength: Strength;
+  basis: string;
+  sources: ReferenceId[];
+}
+
+export const CHECK_METHODS: ({
   id: CheckMethod;
   label: string;
   detail: string;
   name: string;
   part: string;
-}[] = [
+} & Basis)[] = [
   {
     id: "question",
     label: "A viva question",
     detail: "One scenario question with a confidence rating. Viva's product idea.",
     name: "Viva",
     part: "One question",
+    strength: "Gap",
+    basis:
+      "No comprehension check on PRs has published evidence. Its parts are backed: asking questions about your own code tracks success (Moderate), practice tests and confidence ratings help learning (Strong, Moderate). A model can answer most such questions (Moderate).",
+    sources: ["lehtinen-struggle", "adesope", "sparck-cwt", "lehtinen-ai-qlc"],
   },
   {
     id: "walkthrough",
@@ -520,6 +531,10 @@ export const CHECK_METHODS: {
     detail: "Five minutes talking the reviewer through the change, no agent open.",
     name: "Walkthrough",
     part: "Live explanation",
+    strength: "Gap",
+    basis:
+      "Not tested as a check on understanding. Nearby: explaining aids learning (Strong, in lab settings), a live oral exam scaled to one class (Weak), and 1978 walkthroughs found errors about as well as testing (Moderate, a different goal). Probably harder to fake with an AI than a written question, though nobody has tested that.",
+    sources: ["bisra", "barba-exam", "myers-walkthrough"],
   },
   {
     id: "none",
@@ -527,22 +542,30 @@ export const CHECK_METHODS: {
     detail: "No follow-up check. The description and review carry it.",
     name: "Follow-up",
     part: "Not used",
+    strength: "Gap",
+    basis:
+      "No study compares teams with and without a follow-up check. What remains is backed: review is about understanding and spreads knowledge (Strong, Moderate), and clear descriptions make changes easier to review (Moderate).",
+    sources: ["bacchelli-bird", "rigby-bird", "ram-reviewability"],
   },
 ];
 
-export const RECORD_METHODS: {
+export const RECORD_METHODS: ({
   id: RecordMethod;
   label: string;
   detail: string;
   name: string;
   part: string;
-}[] = [
+} & Basis)[] = [
   {
     id: "map",
     label: "A private map",
     detail: "Answers grouped by topic over time. Needs a follow-up check to feed it.",
     name: "Map",
     part: "Private picture",
+    strength: "Gap",
+    basis:
+      "Viva's untested idea. Monitoring without a clear purpose goes with more stress and no gain (Strong), so privacy is the part with evidence behind it.",
+    sources: ["ravid-epm"],
   },
   {
     id: "journal",
@@ -550,6 +573,10 @@ export const RECORD_METHODS: {
     detail: "The person keeps one line per PR: what they had to look up or ask.",
     name: "Log",
     part: "Own notes",
+    strength: "Weak",
+    basis:
+      "Reflective journals in engineering courses are valued by students, and the number of entries predicted marks in one course. Small, correlational, students not working engineers.",
+    sources: ["palmer-journal", "bisra"],
   },
   {
     id: "none",
@@ -557,6 +584,9 @@ export const RECORD_METHODS: {
     detail: "Nothing is kept. Next steps come from reviews and one-to-ones.",
     name: "Record",
     part: "Not used",
+    strength: "Gap",
+    basis: "No evidence either way. Keeping nothing avoids the monitoring risks entirely.",
+    sources: ["ravid-epm"],
   },
 ];
 
@@ -610,6 +640,9 @@ export interface FactoryNote {
   /** The station's thesis when an agent is the author, if it reads differently. */
   thesis?: string;
   change: string;
+  /** How strong the evidence is for the change, and what it rests on. */
+  strength: Strength;
+  basis: string;
   sources: ReferenceId[];
 }
 
@@ -622,7 +655,10 @@ export const FACTORY: Record<StationId, FactoryNote> = {
       "An agent builds the change from a work order. The person shapes it through the checks that mean done, and through how closely they read what the agent did.",
     change:
       "An agent builds the edit, so nobody is at the keyboard to learn from it. The person's understanding comes from the work order: the checks that mean done. Reading the agent's session is how they learn how it was built. A vague work order is sent back before the agent starts.",
-    sources: ["line-guide", "spec-sign-off", "shen-tamkin"],
+    strength: "Gap",
+    basis:
+      "Writing checks that mean done rests on one preprint: agents claimed completion 29 to 38 points more often than evaluators confirmed (Moderate). That reading the session builds understanding is untested. In one small study, developers reading raw agent logs found the agent's bugs only 17% of the time (60% with a stepping tool).",
+    sources: ["spec-sign-off", "agentstepper", "shen-tamkin"],
   },
   post: {
     line: "Gate",
@@ -631,21 +667,36 @@ export const FACTORY: Record<StationId, FactoryNote> = {
       "The agent opens the PR. Its description is a record the factory requires, not an author's defence.",
     change:
       "The agent opens the PR, so an agent-written description is expected. It has to be a record, not a claim: the agreed behaviour, the checks that ran on this commit, behaviour nobody asked for, and how far a mistake would reach. The work order owner adds the decision they are least sure of.",
-    sources: ["oreilly-cheap-review", "spec-sign-off", "line-guide"],
+    strength: "Moderate",
+    basis:
+      "That an agent's claim of done is not evidence rests on one preprint (Moderate). The record format is a practitioner proposal (Opinion). Clear descriptions make changes easier to review (Moderate, pre-AI).",
+    sources: ["spec-sign-off", "oreilly-cheap-review", "ram-reviewability"],
   },
   bot: {
     line: "Review",
     owner: "Reviewer",
     change:
-      "Line's review agent runs after the gate, in the background, and its comments are staged, not posted straight away. The reviewer still triages them. Sending one back to the building agent as an instruction is the factory version of reposting it, so it still needs a person who could defend it.",
-    sources: ["line-guide", "coderabbit-wild"],
+      "In Line, the review agent runs after the gate, in the background, and its comments are staged, not posted straight away. The reviewer still triages them. Sending one back to the building agent as an instruction is the factory version of reposting it, so it still needs a person who could defend it.",
+    strength: "Opinion",
+    basis:
+      "Staging review comments is Line's design, not a studied practice. Review bot comments are often wrong (Moderate), so checking them still matters.",
+    sources: ["coderabbit-wild", "cra-empirical"],
   },
   review: {
     line: "Review",
     owner: "Reviewer",
     change:
-      "Agents open PRs faster than people can read them, so approval drift is the bigger risk here. Line caps agent PRs at what people can read. The reviewer reads the agent's session as well as the diff.",
-    sources: ["faster-than-review", "habituation", "line-guide"],
+      "Agents open PRs faster than people can read them, and most agent PRs studied so far got no human review at all. Reviewers also react more favourably to agent code than its quality warrants. Line caps agent PRs at what people can read, and the reviewer reads the agent's session as well as the diff.",
+    strength: "Moderate",
+    basis:
+      "Most AI-generated PRs get no review, and agents dominate the reviews they do get (Moderate). Reviewer load doubled under one AI mandate (Moderate). Reviewers reacted more favourably to agent PRs despite more redundancy (Moderate). Drift over time is one unreplicated preprint (Weak), and one controlled study saw reviews loosen everywhere, not only with agents.",
+    sources: [
+      "aidev-human-review",
+      "faster-than-review",
+      "less-reuse",
+      "habituation",
+      "agents-review-behaviour",
+    ],
   },
   viva: {
     line: "Review, before approval",
@@ -654,28 +705,39 @@ export const FACTORY: Record<StationId, FactoryNote> = {
       "One small check for the people who asked for the change and who approve it, before the approval counts.",
     change:
       "There is no human author to ask. The check goes to the person who approves, before the approval counts, and to the work order owner. It is never a required gate check: Line trusts checks that are cheap, run every time and are hard to fake, and a question a model can answer is easy to fake.",
-    sources: ["pr-quiz", "line-guide", "lehtinen-ai-qlc"],
+    strength: "Gap",
+    basis:
+      "Quizzing approvers exists as a tool with no published evidence. That a model can answer most questions about code is Moderate, and keeping it out of the gate follows from that.",
+    sources: ["pr-quiz", "lehtinen-ai-qlc"],
   },
   merge: {
     line: "Gate and Artifact",
     owner: "The factory and the approver",
     change:
       "Merge is decided by the gate's checks and a named approval, as in Line. An answer can hold up approval for a conversation, but it is never one of the checks.",
-    sources: ["line-guide", "explyt-gate"],
+    strength: "Opinion",
+    basis: "Line's design and one practitioner proposal. Not studied.",
+    sources: ["explyt-gate"],
   },
   map: {
     line: "Return",
     owner: "The person",
     change:
       "Comprehension debt grows fastest when agents write most of the code. The factory's version of the map is a topic view: which areas of its output nobody can explain. It never names people.",
-    sources: ["osmani-debt", "ravid-epm"],
+    strength: "Gap",
+    basis:
+      "A topic view of understanding is untested. Nearby: knowledge of code concentrates in few people (Moderate), and losses when people leave can be several times the expected loss (Moderate), though both measure who edits code, not who understands it. Not naming people is backed by the monitoring evidence (Strong).",
+    sources: ["avelino-truck", "rigby-turnover", "ravid-epm", "osmani-debt"],
   },
   loop: {
     line: "Return",
     owner: "Product and the person",
     change:
       "In Line, the production signal becomes the next work order. A thin area can too: route changes there to a person who knows it, or have a person build the next one, until someone can explain it.",
-    sources: ["line-guide", "feng-junior-senior"],
+    strength: "Gap",
+    basis:
+      "Routing a thin area to a person is untested. Naming successors for at-risk files cut expected loss by up to 15% (Moderate). Expert-novice pairing transfers knowledge in industry, though novices rarely reflect (Moderate, qualitative).",
+    sources: ["rigby-turnover", "plonka-pairing", "feng-junior-senior"],
   },
 };
 
@@ -760,7 +822,18 @@ export type ReferenceId =
   | "kernel-assistants"
   | "gnome-review"
   | "owasp-ai"
-  | "line-guide"
+  | "aidev-human-review"
+  | "less-reuse"
+  | "agents-review-behaviour"
+  | "agentstepper"
+  | "rigby-bird"
+  | "ram-reviewability"
+  | "myers-walkthrough"
+  | "palmer-journal"
+  | "plonka-pairing"
+  | "hannay-pairing"
+  | "avelino-truck"
+  | "rigby-turnover"
   | "oreilly-cheap-review"
   | "spec-sign-off"
   | "faster-than-review";
@@ -1084,15 +1157,6 @@ export const FURTHER_READING: { heading: string; refs: Reference[] }[] = [
     heading: "Software factories",
     refs: [
       {
-        id: "line-guide",
-        title: "Line: a best practice guide to bringing agents into a software factory",
-        author: "adamsuk",
-        publication: "adamsuk.github.io",
-        date: "Checked 30 October 2026",
-        url: "https://adamsuk.github.io/line/",
-        took: "The factory this walk can run inside. Nine stations, from work order to production signal. People plan and approve, agents build, and a change moves only on evidence, never on a claim.",
-      },
-      {
         id: "oreilly-cheap-review",
         title: "Code Review After Code Gets Cheap",
         author: "Markus Eisele",
@@ -1118,7 +1182,125 @@ export const FURTHER_READING: { heading: string; refs: Reference[] }[] = [
         publication: "arXiv",
         date: "2 July 2026",
         url: "https://arxiv.org/abs/2607.01904",
-        took: "Merged PRs per engineer doubled. Load per reviewer roughly doubled too, and automated review overtook human review.",
+        took: "802 developers, 196,212 PRs. Merged PRs per engineer doubled by month ten. Load per reviewer doubled, and automated review overtook human review in coverage.",
+      },
+      {
+        id: "aidev-human-review",
+        title:
+          "These Aren't the Reviews You're Looking For: How Humans Review AI-Generated Pull Requests",
+        author: "Kacper Duma, Patryk Wróblewski, Jagoda Bobińska, Julia Winiarska, Piotr Przymus",
+        publication: "EASE 2026 (arXiv)",
+        date: "4 May 2026",
+        url: "https://arxiv.org/abs/2605.02273",
+        took: "Most AI-generated PRs in the AIDev dataset get no review. When they are reviewed, AI agents dominate, and human involvement often shows up as steering the agent rather than judging the change.",
+      },
+      {
+        id: "less-reuse",
+        title:
+          "More Code, Less Reuse: Investigating Code Quality and Reviewer Sentiment towards AI-generated Pull Requests",
+        author:
+          "Haoming Huang, Pongchai Jaisri, Shota Shimizu, Lingfeng Chen, Sota Nakashima, Gema Rodríguez-Pérez",
+        publication: "MSR 2026 (arXiv)",
+        date: "29 January 2026",
+        url: "https://arxiv.org/abs/2601.21276",
+        took: "Agent PRs skipped reuse and added redundancy, yet reviewers reacted more neutrally or positively to them than to human PRs.",
+      },
+      {
+        id: "agents-review-behaviour",
+        title: "Does Working with AI Agents Change How Developers Code, Test, and Review?",
+        author: "Muhammad Hamza, Dominik Siemon, Wardah Naeem Awan",
+        publication: "ESEM 2026 (LIPIcs)",
+        date: "5 October 2026",
+        url: "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ESEM.2026.67",
+        took: "669 developers with a control group. After agent adoption, reviews got faster, less detailed and more permissive, but control repositories showed the same trend, so it may not be the agents.",
+      },
+      {
+        id: "agentstepper",
+        title: "AgentStepper: Interactive Debugging of Software Development Agents",
+        author: "Robert Hutter, Michael Pradel",
+        publication: "arXiv",
+        date: "6 February 2026",
+        url: "https://arxiv.org/abs/2602.06593",
+        took: "12 developers. Reading raw agent logs, they found bugs in the agent's implementation 17% of the time. With a stepping tool, 60%. Interpretation of the trajectory was about two thirds right either way. Debugging, not PR review.",
+      },
+    ],
+  },
+  {
+    heading: "Alternatives and spreading knowledge",
+    refs: [
+      {
+        id: "rigby-bird",
+        title: "Convergent Contemporary Software Peer Review Practices",
+        author: "Peter C. Rigby, Christian Bird",
+        publication: "ESEC/FSE 2013",
+        date: "August 2013",
+        url: "https://www.microsoft.com/en-us/research/publication/convergent-software-peer-review-practices/",
+        took: "Review at Google, Microsoft, AMD and in open source converged on similar practices, and spreads knowledge of the system: developers come to know files they review but never edit.",
+      },
+      {
+        id: "ram-reviewability",
+        title:
+          "What Makes a Code Change Easier to Review? An Empirical Investigation on Code Change Reviewability",
+        author: "Achyudh Ram, Anand Ashok Sawant, Marco Castelluccio, Alberto Bacchelli",
+        publication: "ESEC/FSE 2018",
+        date: "November 2018",
+        url: "https://zenodo.org/records/1323659",
+        took: "Interviews and 98 rated changes. The description, the size, and a coherent commit history make a change easier to review.",
+      },
+      {
+        id: "myers-walkthrough",
+        title: "A controlled experiment in program testing and code walkthroughs/inspections",
+        author: "Glenford J. Myers",
+        publication: "Communications of the ACM",
+        date: "September 1978",
+        url: "https://doi.org/10.1145/359588.359602",
+        took: "59 professionals. Walkthroughs and inspections found errors about as well as testing, pairs did best, and people varied enormously. About finding errors, not understanding.",
+      },
+      {
+        id: "palmer-journal",
+        title: "The learning outcomes of an online reflective journal in engineering",
+        author: "Stuart Palmer, Dale Holt, Sharyn Bray",
+        publication: "ascilite 2008",
+        date: "December 2008",
+        url: "https://ascilite.org/conferences/melbourne08/procs/palmer.pdf",
+        took: "Students valued a reflective journal, and the number of entries predicted the final mark alongside prior performance. One course, correlational.",
+      },
+      {
+        id: "plonka-pairing",
+        title: "Knowledge transfer in pair programming: An in-depth analysis",
+        author: "Laura Plonka, Helen Sharp, Janet van der Linden, Yvonne Dittrich",
+        publication: "International Journal of Human-Computer Studies",
+        date: "2015",
+        url: "https://doi.org/10.1016/j.ijhcs.2014.09.001",
+        took: "Video of expert-novice pairs in industry. Experts used six teaching strategies, but novices rarely articulated, reflected or explored. Delivery pressure shaped what was taught.",
+      },
+      {
+        id: "hannay-pairing",
+        title: "The effectiveness of pair programming: A meta-analysis",
+        author: "Jo E. Hannay, Tore Dybå, Erik Arisholm, Dag I. K. Sjøberg",
+        publication: "Information and Software Technology",
+        date: "2009",
+        url: "https://doi.org/10.1016/j.infsof.2009.02.001",
+        took: "A small gain in quality, mostly on complex tasks, at a medium cost in effort. Wide variation between studies, and signs of publication bias.",
+      },
+      {
+        id: "avelino-truck",
+        title: "A novel approach for estimating Truck Factors",
+        author: "Guilherme Avelino, Leonardo Passos, Andre Hora, Marco Tulio Valente",
+        publication: "ICPC 2016",
+        date: "May 2016",
+        url: "https://doi.org/10.1109/ICPC.2016.7503718",
+        took: "Of 133 popular GitHub projects, 46% would be crippled by losing one developer and 28% by losing two. Knowledge of code concentrates in few people.",
+      },
+      {
+        id: "rigby-turnover",
+        title:
+          "Quantifying and mitigating turnover-induced knowledge loss: case studies of Chrome and a project at Avaya",
+        author: "Peter C. Rigby, Yue Cai Zhu, Samuel M. Donadelli, Audris Mockus",
+        publication: "ICSE 2016",
+        date: "May 2016",
+        url: "https://doi.org/10.1145/2884781.2884851",
+        took: "Losses from people leaving can exceed three times the expected loss. Naming successors for at-risk files cut expected loss by up to 15%. Knowledge measured from who edits files, not who understands them.",
       },
     ],
   },
@@ -1221,6 +1403,8 @@ export const CLAIM_TOPICS = [
   "Seniors",
   "Asking questions",
   "Privacy",
+  "Software factories",
+  "Alternatives",
 ] as const;
 
 export type ClaimTopic = (typeof CLAIM_TOPICS)[number];
@@ -1458,6 +1642,129 @@ export const CLAIMS: Claim[] = [
     strength: "Gap",
     caveat: "This is Viva's open question.",
     sources: ["ravid-epm"],
+  },
+  {
+    id: "agent-prs-unreviewed",
+    topic: "Software factories",
+    text: "Most AI-generated PRs get no review. When they are reviewed, AI agents dominate, and people mostly steer the agent rather than judge the change.",
+    strength: "Moderate",
+    caveat: "Open-source PRs in one dataset. Qualitative summary, numbers in the paper.",
+    sources: ["aidev-human-review"],
+  },
+  {
+    id: "reviewer-load-doubled",
+    topic: "Software factories",
+    text: "Under a mandate to double merged PRs with AI, load per reviewer doubled and automated review overtook human review in coverage.",
+    strength: "Moderate",
+    caveat: "One company, 802 developers, not randomized.",
+    sources: ["faster-than-review"],
+  },
+  {
+    id: "agents-overclaim",
+    topic: "Software factories",
+    text: "Agents claimed completion 28.7 to 37.9 points more often than an evaluator confirmed it.",
+    strength: "Moderate",
+    caveat: "A preprint on general agent tasks, not coding PRs.",
+    sources: ["spec-sign-off"],
+  },
+  {
+    id: "reviewers-warmer",
+    topic: "Software factories",
+    text: "Reviewers reacted more neutrally or positively to agent PRs than to human ones, though agent PRs carried more redundancy.",
+    strength: "Moderate",
+    caveat: "Sentiment analysis of review comments, not approval decisions.",
+    sources: ["less-reuse"],
+  },
+  {
+    id: "reviews-loosen",
+    topic: "Software factories",
+    text: "After teams adopted agents, reviews got faster, less detailed and more permissive, but repositories without agents changed the same way.",
+    strength: "Moderate",
+    caveat: "Difference-in-differences design. Cuts against blaming agents for looser review.",
+    sources: ["agents-review-behaviour"],
+  },
+  {
+    id: "session-reading",
+    topic: "Software factories",
+    text: "Reading an agent's session helps a person understand the change.",
+    strength: "Gap",
+    caveat:
+      "Untested for review. In one small study, developers reading raw agent logs found the agent's bugs 17% of the time, and 60% with a stepping tool.",
+    sources: ["agentstepper"],
+  },
+  {
+    id: "knowledge-concentrates",
+    topic: "Software factories",
+    text: "Knowledge of code concentrates in few people: 46% of 133 popular GitHub projects would be crippled by losing one developer.",
+    strength: "Moderate",
+    caveat: "Measured from who edits files, before agents wrote much code.",
+    sources: ["avelino-truck"],
+  },
+  {
+    id: "successors",
+    topic: "Software factories",
+    text: "Losses when people leave can exceed three times the expected loss. Naming successors for at-risk files cut expected loss by up to 15%.",
+    strength: "Moderate",
+    caveat: "Two case studies, Chrome and one Avaya project.",
+    sources: ["rigby-turnover"],
+  },
+  {
+    id: "review-spreads-knowledge",
+    topic: "Alternatives",
+    text: "Code review spreads knowledge of the system: developers come to know files they review but never edit.",
+    strength: "Moderate",
+    caveat: "Google, Microsoft, AMD and open source, pre-AI.",
+    sources: ["rigby-bird"],
+  },
+  {
+    id: "reviewability",
+    topic: "Alternatives",
+    text: "A clear description, a small size and a coherent commit history make a change easier to review.",
+    strength: "Moderate",
+    caveat: "Ten interviews and 98 rated changes, pre-AI.",
+    sources: ["ram-reviewability"],
+  },
+  {
+    id: "walkthroughs",
+    topic: "Alternatives",
+    text: "Walkthroughs and inspections found errors about as well as testing, pairs did best, and people varied enormously.",
+    strength: "Moderate",
+    caveat: "1978, about finding errors, not checking understanding.",
+    sources: ["myers-walkthrough"],
+  },
+  {
+    id: "walkthrough-checks",
+    topic: "Alternatives",
+    text: "A short walkthrough checks whether the author understands an AI-assisted change.",
+    strength: "Gap",
+    caveat: "Untested. Closest is a live oral exam in one course.",
+    sources: ["barba-exam"],
+  },
+  {
+    id: "journals",
+    topic: "Alternatives",
+    text: "A reflective learning journal helps people learn.",
+    strength: "Weak",
+    caveat:
+      "Engineering students value it, and entries predicted marks in one course. Correlational, self-reported.",
+    sources: ["palmer-journal"],
+  },
+  {
+    id: "pairing-transfer",
+    topic: "Alternatives",
+    text: "Expert-novice pairing transfers knowledge in industry, but novices rarely articulate, reflect or explore, and delivery pressure shapes what is taught.",
+    strength: "Moderate",
+    caveat: "Qualitative video analysis.",
+    sources: ["plonka-pairing"],
+  },
+  {
+    id: "pairing-quality",
+    topic: "Alternatives",
+    text: "Pair programming gives a small gain in quality, mostly on complex tasks, at a medium cost in effort.",
+    strength: "Moderate",
+    caveat:
+      "Meta-analysis with wide variation and signs of publication bias. Measures quality, not learning.",
+    sources: ["hannay-pairing"],
   },
 ];
 
@@ -1916,6 +2223,9 @@ export const OPEN_QUESTIONS = [
   "How is a map of gaps received: as growth feedback or as surveillance?",
   "Do confident wrong answers predict later review misses or incidents?",
   "Does asking seniors too keep the check from reading as a junior test?",
+  "Does reading an agent's session help an approver understand the change, or is it too long to read?",
+  "Is a short walkthrough harder to fake than a written question, and worth the reviewer's time?",
+  "In a factory, does a topic view of what nobody can explain lead to better work orders?",
 ];
 
 export type ExperimentStatus = "Planned" | "Running" | "Done";
@@ -1949,6 +2259,18 @@ export const EXPERIMENTS: { id: number; text: string; status: ExperimentStatus; 
     {
       id: 5,
       text: "Ask reviewers who forward bot comments one question about each. How often can they defend it?",
+      status: "Planned",
+      result: "",
+    },
+    {
+      id: 6,
+      text: "On the same PRs, compare a written question with a five-minute walkthrough. Which one separates people who understood from people who did not, and at what cost?",
+      status: "Planned",
+      result: "",
+    },
+    {
+      id: 7,
+      text: "Give approvers an agent PR with and without its session. Ask the same question after each. Does the session help?",
       status: "Planned",
       result: "",
     },

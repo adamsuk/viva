@@ -42,10 +42,14 @@ Try forwarding the bot comment that describes a loop that never ends. It does en
 
 The follow-up check (station 5) and the map (station 7) are Viva's own idea, and nothing has tested them yet. Set them at the top of the walk:
 
-| Station | Options |
-|---|---|
-| 5. Follow-up check | A viva question. A five-minute walkthrough, no agent open. Or none: the station is N/A. |
-| 7. What is kept | A private map, which needs a follow-up check to feed it. A learning log the person writes themselves. Or none: the station is N/A. |
+| Station | Option | Evidence |
+|---|---|---|
+| 5. Follow-up check | A viva question | **Gap.** No PR comprehension check has published evidence. Its parts are backed: questions about your own code track success, practice tests and confidence ratings help learning. A model answers most such questions. |
+| | A five-minute walkthrough, no agent open | **Gap.** Untested as a check. Nearby: explaining aids learning (Strong, lab), a live oral exam in one course (Weak), walkthroughs found errors as well as testing in 1978 (Moderate, a different goal). |
+| | None: the station is N/A | **Gap.** No study compares teams with and without a check. Review spreads knowledge and clear descriptions help review (Moderate). |
+| 7. What is kept | A private map (needs a follow-up check) | **Gap.** Viva's idea. The case for privacy is Strong: monitoring without a clear purpose goes with more stress and no gain. |
+| | A learning log the person writes | **Weak.** Students value reflective journals, and entries predicted marks in one engineering course. |
+| | None: the station is N/A | **Gap.** No evidence either way. |
 
 With both set to none, stations 1 to 4 and 8 still hold. Authors write their own descriptions, bot comments get checked, and approval means the reviewer could explain the change. That is the Start stage below. The team audit offers N/A on the questions about these two ideas, and N/A is left out of the score.
 
@@ -53,16 +57,18 @@ With both set to none, stations 1 to 4 and 8 still hold. Authors write their own
 
 The walk can run inside a factory as defined by [Line](https://github.com/adamsuk/line): agents build from work orders, and people plan and approve. The PR walks the same eight stations, but the author is an agent. The person who has to defend the change is whoever wrote the work order and whoever approves it.
 
-| Station | Beside Line's | What changes |
-|---|---|---|
-| 1. Draft | Backlog and Bench | No one learns at the keyboard. Understanding comes from writing the checks that mean done, and from reading the agent's session. A vague work order is sent back. |
-| 2. Post | Gate | The agent's description is expected, but it must be an evidence record (agreed behaviour, checks that ran on this commit, behaviour nobody asked for, how far a mistake reaches), not a claim of done. |
-| 3. Bot review | Review | Review-agent comments are staged after the gate. Sending one back to the building agent still needs a person who could defend it. |
-| 4. Review | Review | Agents open PRs faster than people read, so approval drift is the bigger risk. The reviewer reads the session as well as the diff. |
-| 5. Follow-up | Review, before approval | The check goes to the approver and the work order owner. It is never a required gate check, because a question a model can answer is easy to fake. |
-| 6. Merge | Gate and Artifact | Merge rests on the gate's checks and a named approval. An answer can hold up approval for a conversation. |
-| 7. Map | Return | The factory's version is a topic view, the areas of its output nobody can explain, never a view of people. |
-| 8. Return | Return | A thin area becomes a work order: route changes there to a person, or have a person build the next one. |
+Most of this is reasoning from Line's design and from evidence about AI review in general. Little research looks at understanding inside an agent factory.
+
+| Station | Beside Line's | What changes | Evidence |
+|---|---|---|---|
+| 1. Draft | Backlog and Bench | No one learns at the keyboard. Understanding comes from writing the checks that mean done, and from reading the agent's session. A vague work order is sent back. | **Gap.** Agents overclaim done by 29 to 38 points (Moderate, one preprint). Reading the session is untested; developers reading raw agent logs found its bugs 17% of the time. |
+| 2. Post | Gate | The agent's description must be an evidence record, not a claim of done. | **Moderate.** Agents overclaim, and clear descriptions help review. The record format is a practitioner proposal. |
+| 3. Bot review | Review | Review-agent comments are staged after the gate. Sending one back to the agent still needs a person who could defend it. | **Opinion.** Staging is Line's design. Bot comments are often wrong (Moderate). |
+| 4. Review | Review | Most agent PRs get no human review, and reviewers warm to agent code more than its quality warrants. The reviewer reads the session as well as the diff. | **Moderate.** Several 2026 studies, though one controlled study saw reviews loosen with or without agents. |
+| 5. Follow-up | Review, before approval | The check goes to the approver and the work order owner, and is never a required gate check. | **Gap.** One tool, no evidence. A model answers most questions (Moderate). |
+| 6. Merge | Gate and Artifact | Merge rests on the gate's checks and a named approval. | **Opinion.** |
+| 7. Map | Return | A topic view of what nobody can explain, never a view of people. | **Gap.** Knowledge concentrates in few people (Moderate), measured by who edits code. |
+| 8. Return | Return | Route a thin area to a person, or have a person build the next change there. | **Gap.** Naming successors cut expected knowledge loss by up to 15% (Moderate). Pairing transfers knowledge (Moderate, qualitative). |
 
 ## Bringing checks in
 

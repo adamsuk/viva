@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { RecommendationList, Sources } from "@/components/viva/recommendations";
+import { RecommendationList, Sources, StrengthBadge } from "@/components/viva/recommendations";
 import {
   BOT_COMMENTS,
+  CHECK_METHODS,
   CONFIDENCE,
   DIFF,
   DRAFT_CHOICES,
@@ -21,6 +22,7 @@ import {
   POST_CHOICES,
   PR,
   QUESTION,
+  RECORD_METHODS,
   RECOMMENDATIONS,
   REVIEW_CHOICES,
   nextStation,
@@ -67,6 +69,7 @@ export function Stage() {
         )}
       </div>
 
+      {!skipped && (focus === "viva" || focus === "map") ? <MethodBasis id={focus} /> : null}
       {setup.mode === "factory" ? <FactoryPanel id={focus} /> : null}
 
       {skipped ? null : (
@@ -85,14 +88,51 @@ export function Stage() {
 }
 
 function NotApplicable({ id }: { id: StationId }) {
+  const setup = useViva((s) => s.walk.setup);
+  const basis =
+    id === "viva"
+      ? CHECK_METHODS.find((m) => m.id === setup.check)
+      : id === "map"
+        ? RECORD_METHODS.find((m) => m.id === setup.record)
+        : null;
   return (
     <div className="grid gap-4">
       <div className="border border-dashed border-line p-4">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-faint">Not applicable</p>
         <p className="mt-2 text-sm text-ink">{NOT_APPLICABLE[id]}</p>
+        {basis ? (
+          <>
+            <p className="mt-3 flex flex-wrap items-baseline gap-2 text-sm text-muted">
+              <StrengthBadge strength={basis.strength} />
+              <span>{basis.basis}</span>
+            </p>
+            <Sources ids={basis.sources} />
+          </>
+        ) : null}
       </div>
       <Continue id={id} />
     </div>
+  );
+}
+
+/** How strong the evidence is for the follow-up check or record in use. */
+function MethodBasis({ id }: { id: "viva" | "map" }) {
+  const setup = useViva((s) => s.walk.setup);
+  const m =
+    id === "viva"
+      ? CHECK_METHODS.find((c) => c.id === setup.check)!
+      : RECORD_METHODS.find((c) => c.id === setup.record)!;
+  return (
+    <aside className="mt-8 border border-dashed border-line p-4">
+      <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
+        Evidence for {m.label.toLowerCase()}
+      </p>
+      <p className="mt-2 flex flex-wrap items-baseline gap-2 text-sm text-muted">
+        <StrengthBadge strength={m.strength} />
+        <span>{m.basis}</span>
+      </p>
+      <Sources ids={m.sources} />
+    </aside>
   );
 }
 
@@ -106,6 +146,10 @@ function FactoryPanel({ id }: { id: StationId }) {
         <p className="font-mono text-xs text-muted">Beside Line's {note.line}</p>
       </div>
       <p className="mt-1 text-sm text-ink">{note.change}</p>
+      <p className="mt-2 flex flex-wrap items-baseline gap-2 text-sm text-muted">
+        <StrengthBadge strength={note.strength} />
+        <span>{note.basis}</span>
+      </p>
       <Sources ids={note.sources} />
     </aside>
   );

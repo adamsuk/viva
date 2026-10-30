@@ -189,7 +189,7 @@ export function buildLlmsFull(changelog: string): string {
         }${GAPS[r.id] ? `\n  Gap: ${GAPS[r.id]}` : ""}`;
       })
       .join("\n");
-    return `## ${s.index} ${s.name}\n\n${s.thesis}\n\n${s.lesson}\n\nAI: ${GUIDE[s.id].ai}\n\nHuman: ${GUIDE[s.id].human}\n\nIn a software factory (beside Line's ${FACTORY[s.id].line}; answered by ${FACTORY[s.id].owner}): ${FACTORY[s.id].change}${NOT_APPLICABLE[s.id] ? `\n\nIf the team does not use this station: ${NOT_APPLICABLE[s.id]}` : ""}\n\n${recs}`;
+    return `## ${s.index} ${s.name}\n\n${s.thesis}\n\n${s.lesson}\n\nAI: ${GUIDE[s.id].ai}\n\nHuman: ${GUIDE[s.id].human}\n\nIn a software factory (beside Line's ${FACTORY[s.id].line}; answered by ${FACTORY[s.id].owner}): ${FACTORY[s.id].change} Evidence: ${FACTORY[s.id].strength}. ${FACTORY[s.id].basis}${NOT_APPLICABLE[s.id] ? `\n\nIf the team does not use this station: ${NOT_APPLICABLE[s.id]}` : ""}\n\n${recs}`;
   }).join("\n\n");
   const claims = CLAIMS.map(
     (c) =>

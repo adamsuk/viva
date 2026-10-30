@@ -293,6 +293,10 @@ function Variations() {
               <div key={m.id} className="border-b border-line pb-2">
                 <dt className="font-medium text-ink">{m.label}</dt>
                 <dd className="text-muted">{m.id === "none" ? NOT_APPLICABLE.viva : m.detail}</dd>
+                <dd className="mt-1 flex flex-wrap items-baseline gap-2 text-muted">
+                  <StrengthBadge strength={m.strength} />
+                  <span>{m.basis}</span>
+                </dd>
               </div>
             ))}
           </dl>
@@ -306,6 +310,10 @@ function Variations() {
               <div key={m.id} className="border-b border-line pb-2">
                 <dt className="font-medium text-ink">{m.label}</dt>
                 <dd className="text-muted">{m.id === "none" ? NOT_APPLICABLE.map : m.detail}</dd>
+                <dd className="mt-1 flex flex-wrap items-baseline gap-2 text-muted">
+                  <StrengthBadge strength={m.strength} />
+                  <span>{m.basis}</span>
+                </dd>
               </div>
             ))}
           </dl>
@@ -327,16 +335,19 @@ function Variations() {
         </a>
         , agents build from work orders and people plan and approve. The PR still walks the same
         eight stations, but the author is an agent. The person who has to defend the change is the
-        one who wrote the work order and the one who approves it.
+        one who wrote the work order and the one who approves it. Most of this is reasoning from
+        Line's design and from evidence about AI review in general. Little research looks at
+        understanding inside an agent factory, and each row says how much there is.
       </p>
       <div className="mt-4 overflow-x-auto border border-line bg-paper">
-        <table className="w-full min-w-[44rem] text-left text-sm">
+        <table className="w-full min-w-[60rem] text-left text-sm">
           <thead className="border-b border-line font-mono text-xs text-muted">
             <tr>
               <th className="p-3">Station</th>
               <th className="p-3">Beside Line's</th>
               <th className="p-3">Who answers</th>
               <th className="p-3">What changes</th>
+              <th className="p-3">Evidence</th>
             </tr>
           </thead>
           <tbody>
@@ -349,6 +360,10 @@ function Variations() {
                 <td className="p-3 text-muted">{FACTORY[st.id].line}</td>
                 <td className="p-3 text-ink">{FACTORY[st.id].owner}</td>
                 <td className="p-3 text-ink">{FACTORY[st.id].change}</td>
+                <td className="p-3 text-muted">
+                  <StrengthBadge strength={FACTORY[st.id].strength} />
+                  <p className="mt-1 text-xs">{FACTORY[st.id].basis}</p>
+                </td>
               </tr>
             ))}
           </tbody>
