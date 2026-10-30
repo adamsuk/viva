@@ -1,0 +1,26 @@
+# Changelog
+
+All notable changes to Viva are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Viva is a live site with no version numbers, so each section is the date the change merged (YYYY-MM-DD, Europe/London).
+
+Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 2026-10-30
+
+### Added
+
+- The first research notes: claims labelled by strength, prior art, open questions, and an experiment log.
+- A walkable site in the style of [Line](https://github.com/adamsuk/line): one AI-assisted pull request, #212, moves through eight stations (Draft, Post, Bot review, Review, Viva, Merge, Map, Return). Weak choices are sent back: an agent-written description, a forwarded bot comment nobody checked, a rubber-stamp approval, a hard block on a quiz, and a ranked dashboard of people. Why: the notes argued for checks on understanding but did not show where they fit in a real review.
+- The guide: three adoption stages, a table of where people stay in the loop, 23 recommendations labelled Best practice or Cutting edge, the evidence as 29 claims labelled by strength, prior art with the gap each tool leaves, open questions and experiments, and Audit your team. Answers stay in this browser.
+- guide.json, llms.txt and llms-full.txt, built from the page's data and versioned by this changelog, with a read-only audit prompt that is told not to look at individuals.
+- New research behind the stations. Sources: [(Im)Paired Programming](https://arxiv.org/abs/2607.26375) (29 July 2026), [Students Struggle to Explain Their Own Program Code](https://arxiv.org/abs/2104.06710) (2021), [Let's Ask AI About Their Programs](https://arxiv.org/abs/2404.11734) (2024), [LLVM AI Tool Use Policy](https://llvm.org/docs/AIToolPolicy.html), [Linux kernel AI Coding Assistants](https://docs.kernel.org/process/coding-assistants.html), [Bacchelli and Bird](https://web.eecs.umich.edu/~weimerw/2018-481/readings/codereview.pdf) (2013), [Perry and others](https://arxiv.org/abs/2211.03622) (2023), [Ravid and others on monitoring](https://doi.org/10.1111/peps.12514) (2023), [the EU AI Act](https://eur-lex.europa.eu/eli/reg/2024/1689/oj), [Adesope and others](https://doi.org/10.3102/0034654316689306) (2017), [Bisra and others](https://doi.org/10.1007/s10648-018-9434-x) (2018), [Feng and others](https://arxiv.org/abs/2602.00496) (CHI 2026), [METR's 2026 update](https://metr.org/blog/2026-02-24-uplift-update/), and the [Canaries in the Coal Mine](https://digitaleconomy.stanford.edu/app/uploads/2025/11/CanariesintheCoalMine_Nov25.pdf) revision.
+- Two new tools in prior art: [Sphinx](https://github.com/parthh01/sphinx), a push hook, and [PR Quiz Gate](https://github.com/michaelbeutler/pr-quiz), which quizzes reviewers. Neither has published evidence.
+- A pull-request check that runs typecheck, lint and tests, a Pages deploy, and a changelog check.
+
+### Changed
+
+- The confidence-weighted testing claim now cites its authors, Sparck, Bjork and Bjork (2016). It was attributed to "Little et al.", whose earlier work it builds on. Source: [On the learning benefits of confidence-weighted testing](https://doi.org/10.1186/s41235-016-0003-x).
+- The review-agent claim now says what the paper measured: 12 of 13 agents had an average signal ratio below 60%, and agent-only PRs merged at 45% against 68% for human-only review. It said "actionable comments" and "human comments were addressed far more often", which the paper does not report. Source: [arXiv 2604.03196](https://arxiv.org/abs/2604.03196).
+- The METR follow-up claim now quotes METR's own post: it could not measure the effect reliably and calls its evidence very weak. Secondary write-ups had cited an 18% speedup that METR did not report. Source: [We are Changing our Developer Productivity Experiment Design](https://metr.org/blog/2026-02-24-uplift-update/).
+- The GPT-4 figure (88% of questions about code) is now checked against the paper: 399 questions, 88% for GPT-4 and 69% for GPT-3.5.
+- The junior employment claim now links the Stanford paper and its February 2026 note instead of a news summary, and adds that under stricter controls the drop is significant only after 2024.
+- Secondary sources that the primary research replaced were removed: Codacy, Faros, Structify, ai2.work and two news summaries.

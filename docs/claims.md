@@ -1,43 +1,70 @@
+<!-- Generated from src/viva/model.ts by `npm run docs`. Edit the model, not this file. -->
+
 # Claims
 
-Labels are defined in the [README](../README.md). Last checked 30 October 2026.
+What the evidence says, labelled by strength.
 
-## 1. AI in code review
+- **Strong**: Large sample or controlled trial, primary source.
+- **Moderate**: Reasonable data but a single study, a preprint, or notable confounders.
+- **Weak**: Vendor reports, surveys, or a single blog. Directional only.
+- **Opinion**: Practitioner argument with no data.
+- **Gap**: Nothing solid found.
 
-| Claim | Label | Source |
-|---|---|---|
-| Developers accepted 36.4% of one review bot's comments, discussed 7.3%, rejected 56.3% (31,073 pairs, 239 repos). | Moderate | [CodeRabbit in the wild, arXiv 2607.03316](https://agentpatterns.ai/code-review/agentic-review-comment-acceptance/) |
-| 12 of 13 review agents average below 60% actionable comments. Human comments were addressed far more often than bot comments. | Moderate | [arXiv 2604.03196](https://arxiv.org/html/2604.03196v1) |
-| Reviewers' approval of agent PRs rose from 30.5% to 36.6% over their history, but comment-effort measures did not fall. Agents may simply have improved. No defect data. Unreplicated. | Weak | [arXiv 2609.06213, summary](https://usethinkr.com/news/reviewer-approval-drift-ai-code) |
-| Polished AI output disarms reviewer scepticism (automation bias). | Opinion | [Codacy](https://blog.codacy.com/automation-bias-in-ai-generated-code-review-why-clean-code-still-ships-broken) |
-| Under high AI adoption, more PRs merge with no review. | Weak (vendor) | [Faros](https://www.faros.ai/blog/ai-code-quality-senior-engineer-review-burden) |
+## AI in code review
 
-## 2. Juniors
+| Claim | Label | Caveat | Sources |
+|---|---|---|---|
+| Developers accepted 36.4% of one review bot's comments, discussed 7.3%, and rejected 56.3%. | Moderate | One bot, 239 repos. A preprint. | [Is Agentic Code Review Helpful? Mining Developers' Feedback to CodeRabbit Reviews in the Wild](https://arxiv.org/abs/2607.03316) (3 July 2026) |
+| PRs reviewed only by agents merged at 45%, against 68% for human-only review. 12 of 13 agents had an average signal ratio below 60%. | Moderate | Observational. Agent-only PRs may differ in kind. | [From Industry Claims to Empirical Reality: An Empirical Study of Code Review Agents in Pull Requests](https://arxiv.org/abs/2604.03196) (3 April 2026) |
+| Reviewers' approval of agent PRs rose from 30.5% to 36.6% over their history, while simple comment-effort measures stayed flat. | Weak | Agents may simply have improved. No defect data. Unreplicated. | [Beyond Lexical Metrics: Sentence-Embedding Detection of Reviewer Habituation in AI Code Review](https://arxiv.org/abs/2609.06213) (5 September 2026) |
+| Understanding the change is the core of code review, and knowledge transfer is one of its main outcomes. | Strong | Pre-AI, one company. Observation, interviews and surveys. | [Expectations, Outcomes, and Challenges of Modern Code Review](https://web.eecs.umich.edu/~weimerw/2018-481/readings/codereview.pdf) (May 2013) |
+| People with an AI assistant wrote less secure code and were more confident it was secure. | Moderate | 47 participants, 2022 tools, writing not reviewing. | [Do Users Write More Insecure Code with AI Assistants?](https://arxiv.org/abs/2211.03622) (November 2023) |
 
-| Claim | Label | Source |
-|---|---|---|
-| In an RCT of 52 mostly junior developers, the AI group scored 50% on a comprehension quiz against 67% for hand-coders. The speed gain was not significant. | Strong, with caveats: small, immediate test, chat tool not an agent | [Anthropic](https://www.anthropic.com/research/AI-assistance-coding-skills) |
-| How people used AI mattered. Delegation, progressive reliance and iterative AI debugging scored about 24-39%. Conceptual inquiry, code explanation, and generate-then-understand scored about 65-86%. Pattern groups were n=2 to 7. | Moderate | Same |
-| Employment of developers aged 22-25 fell nearly 20% from late 2022. | Strong, interest rates a confounder (authors test for it) | [Stanford AI Index coverage](https://news.outsourceaccelerator.com/?p=83095) |
-| Review is losing its mentoring function. | Opinion | [Structify](https://structify.ai/blog/we-stopped-hiring-juniors) |
+## Understanding
 
-Note: one secondary blog quotes 42% vs 57% for the Anthropic study. The primary source says 50% vs 67%.
+| Claim | Label | Caveat | Sources |
+|---|---|---|---|
+| In a randomized trial, the AI group scored 50% on a comprehension quiz against 67% for people who coded by hand. The speed gain was not significant. | Strong | 52 people, one session, a chat assistant not an agent. Tested straight after. | [How AI assistance impacts the formation of coding skills](https://www.anthropic.com/research/AI-assistance-coding-skills) (29 January 2026) |
+| How people used AI mattered. Delegation, progressive reliance and iterative AI debugging scored 24% to 39%. Conceptual inquiry, hybrid code explanation and generate-then-understand scored 65% to 86%. | Moderate | Groups of 2 to 7 people. Correlation, not cause. | [How AI assistance impacts the formation of coding skills](https://www.anthropic.com/research/AI-assistance-coding-skills) (29 January 2026) |
+| Coding agents helped students finish faster but hurt their comprehension of their own code. Low-effort use, like auto-accepting edits, went with the lowest understanding. | Moderate | 54 students, a preprint. | [(Im)Paired Programming: Coding Agents Improve Productivity but Harm Understanding](https://arxiv.org/abs/2607.26375) (29 July 2026) |
+| People who wrote essays with an LLM showed weaker brain connectivity and most could not quote what they had written. | Weak | Essays, not code. 54 people, 18 in the crossover. Unreviewed preprint, widely overstated. | [Your Brain on ChatGPT: Accumulation of Cognitive Debt when Using an AI Assistant for Essay Writing Task](https://arxiv.org/abs/2506.08872) (June 2025) |
+| Knowledge workers who trusted the AI more reported less critical thinking. Those who trusted themselves more reported more. | Moderate | Self-reported survey of 319 people. | [The Impact of Generative AI on Critical Thinking: Self-Reported Reductions in Cognitive Effort and Confidence Effects From a Survey of Knowledge Workers](https://doi.org/10.1145/3706598.3713778) (April 2025) |
+| About a third of students struggled to explain code they had just written. Answering questions about it tracked course success better than a correct submission did. | Moderate | Pre-AI students, one course. | [Students Struggle to Explain Their Own Program Code](https://arxiv.org/abs/2104.06710) (June 2021) |
 
-## 3. Seniors
+## Juniors
 
-| Claim | Label | Source |
-|---|---|---|
-| Experienced developers were 19% slower with AI in 2025 but believed they were 20% faster. | Strong for early-2025 tools only | [METR](https://scienceblog.com/?p=582102) |
-| METR's 2026 follow-up leaned towards a speedup but METR flagged it unreliable due to selection effects. | Moderate | Same |
-| Senior review load is rising, and "almost right" AI code is costlier to review. | Weak | [Faros](https://www.faros.ai/blog/ai-code-quality-senior-engineer-review-burden) |
-| Senior deskilling from AI use. | Gap | None found |
-| A senior shortage in 5-10 years if juniors are squeezed out. | Opinion | [ai2.work](https://ai2.work/blog/stanford-index-junior-coder-jobs-fall-20-as-ai-reshapes-hiring) |
+| Claim | Label | Caveat | Sources |
+|---|---|---|---|
+| Employment of software developers aged 22 to 25 fell nearly 20% from its late-2022 peak, while older workers held steady. | Strong | Payroll data, causes debated. Under stricter controls the drop is significant only after 2024. | [Canaries in the Coal Mine? Six Facts about the Recent Employment Effects of Artificial Intelligence](https://digitaleconomy.stanford.edu/app/uploads/2025/11/CanariesintheCoalMine_Nov25.pdf) (November 2025 revision)<br>[Canaries, interest rates and timing: more on recent drivers of employment changes for young workers](https://digitaleconomy.stanford.edu/news/canaries-interest-rates-and-timinga-more-on-recent-drivers-of-employment-changes-for-young-workers) (9 February 2026) |
+| 38% of engineering leaders surveyed agreed AI tools have reduced the direct mentoring juniors get from seniors. | Weak | One survey, figures reported in articles rather than the full report. | [Junior devs still have a path to senior roles](https://leaddev.com/hiring/junior-devs-still-have-path-senior-roles) (2025) |
+| Juniors swing between over-reliance and avoidance. Seniors keep control through detailed delegation built on pre-AI foundations. | Moderate | Qualitative, 20 people. | [From Junior to Senior: Allocating Agency and Navigating Professional Growth in Agentic AI-Mediated Software Engineering](https://arxiv.org/abs/2602.00496) (31 January 2026) |
+| Review is losing its mentoring function as bots take the first pass. | Opinion |  | [Comprehension Debt: the hidden cost of AI generated code](https://addyosmani.com/blog/comprehension-debt/) (14 March 2026) |
 
-## 4. Assessment techniques
+## Seniors
 
-| Claim | Label | Source |
-|---|---|---|
-| Multiple-choice practice tests with competitive wrong options can improve answers to related, untested questions. | Strong (cognitive psychology) | [Little et al. line of work](https://link.springer.com/10.1186/s41235-016-0003-x) |
-| Confidence-weighted multiple choice improved transfer to related questions more than standard multiple choice. | Moderate | Same |
-| LLM-generated code-comprehension questions are not reliably correct, so the authors use them for formative assessment only. | Moderate | [AutoMCQ](https://arxiv.org/pdf/2505.16430) |
-| GPT-4 answered 88% of questions about its own code. Answering such questions with AI is easy. | Moderate | [arXiv 2404.11734](https://arxiv.org/html/2404.11734v1) |
+| Claim | Label | Caveat | Sources |
+|---|---|---|---|
+| Experienced developers took 19% longer with early-2025 AI tools but believed they were about 20% faster. | Strong | For early-2025 tools only. METR now marks it out of date. | [Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) (10 July 2025) |
+| METR's follow-up could not measure the effect reliably, because developers declined to work without AI. It thinks gains are probably larger now. | Moderate | METR calls its own evidence very weak. | [We are Changing our Developer Productivity Experiment Design](https://metr.org/blog/2026-02-24-uplift-update/) (24 February 2026) |
+| Most developers name almost-right AI output as their top frustration, and fewer than half always check AI code before committing. | Weak | Surveys, one from a vendor. | [2025 Stack Overflow Developer Survey: AI](https://survey.stackoverflow.co/2025/ai) (July 2025)<br>[State of Code Developer Survey report: the current reality of AI coding](https://www.sonarsource.com/blog/state-of-code-developer-survey-report-the-current-reality-of-ai-coding/) (January 2026) |
+| Experienced developers lose skill when AI does the work. | Gap | Predicted since 1983 for automation in general. No study of senior engineers found. | [Ironies of Automation](https://doi.org/10.1016/0005-1098(83)90046-8) (1983) |
+
+## Asking questions
+
+| Claim | Label | Caveat | Sources |
+|---|---|---|---|
+| Practice tests improve later recall more than restudying, and multiple choice works well as a format. | Strong | Many studies used simple material, not code. | [Rethinking the Use of Tests: A Meta-Analysis of Practice Testing](https://doi.org/10.3102/0034654316689306) (2017) |
+| Confidence-weighted multiple choice improved answers to new, related questions more than standard multiple choice. | Moderate | Lab studies, not workplace. | [On the learning benefits of confidence-weighted testing](https://doi.org/10.1186/s41235-016-0003-x) (2016) |
+| Prompting people to explain what they are learning has a medium effect on learning. | Strong | Mostly undergraduates. | [Inducing Self-Explanation: a Meta-Analysis](https://doi.org/10.1007/s10648-018-9434-x) (2018) |
+| LLM-written questions about code are not reliably correct, so the authors use them for formative work only. | Moderate | A two-page tool paper. | [AutoMCQ: Automatically Generate Code Comprehension Questions using GenAI](https://arxiv.org/abs/2505.16430) (May 2025) |
+| GPT-4 answered 88% of questions about code correctly. A question alone cannot tell a person from a model. | Moderate | 2024 models. Today's do better. | [Let's Ask AI About Their Programs: Exploring ChatGPT's Answers To Program Comprehension Questions](https://arxiv.org/abs/2404.11734) (April 2024) |
+| Live, conversational oral exams can scale to a class of 58 and keep their validity with AI allowed. | Weak | One course, no outcome data. | [The Conversational Exam: A Scalable Assessment Design for the AI Era](https://arxiv.org/abs/2601.10691) (15 January 2026) |
+| A comprehension gate on PRs changes defects, learning, or review quality. | Gap | No tool found publishes an evaluation. | [Comprehension debt and the quiz gate](https://explyt.ai/en/blog/comprehension-debt-quiz-gate) (15 October 2026)<br>[Sphinx](https://github.com/parthh01/sphinx) (October 2026)<br>[PR Quiz Gate](https://github.com/michaelbeutler/pr-quiz) (2026) |
+
+## Privacy
+
+| Claim | Label | Caveat | Sources |
+|---|---|---|---|
+| Monitoring with no explicit purpose was not linked to better performance. Transparent, less invasive monitoring went with better attitudes. | Strong | Meta-analysis of workplace monitoring in general, not code. | [A meta-analysis of the effects of electronic performance monitoring on work outcomes](https://doi.org/10.1111/peps.12514) (2023 (online April 2022)) |
+| In the EU, AI used to monitor or evaluate workers' performance and behaviour is classed as high risk. | Strong | The date the obligations apply may have moved. Check before relying on it. | [Regulation (EU) 2024/1689 (the AI Act), Annex III](https://eur-lex.europa.eu/eli/reg/2024/1689/oj) (12 July 2024) |
+| A private map of understanding is received as growth feedback rather than surveillance. | Gap | This is Viva's open question. | [A meta-analysis of the effects of electronic performance monitoring on work outcomes](https://doi.org/10.1111/peps.12514) (2023 (online April 2022)) |
