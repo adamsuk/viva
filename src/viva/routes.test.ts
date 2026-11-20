@@ -2,10 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { hashFor, routeFromHash } from "./routes.ts";
 
-test("three views have hash routes", () => {
+test("views have hash routes", () => {
   assert.deepEqual(routeFromHash(""), { view: "home", anchor: null });
   assert.deepEqual(routeFromHash("#walk"), { view: "walk", anchor: null });
   assert.deepEqual(routeFromHash("#/guide"), { view: "guide", anchor: null });
+  assert.deepEqual(routeFromHash("#map"), { view: "map", anchor: null });
 });
 
 test("sections in the guide have anchors", () => {
@@ -21,6 +22,7 @@ test("hashes round trip", () => {
     "",
     "#walk",
     "#guide",
+    "#map",
     "#parts",
     "#evidence",
     "#prior-art",
