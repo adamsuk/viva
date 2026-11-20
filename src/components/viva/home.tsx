@@ -31,6 +31,11 @@ export function Home() {
             detail={HOMEPAGE.audit}
             onClick={() => setView("guide", "audit")}
           />
+          <Cta
+            label="Personal map"
+            detail="Drop the viva skill log. See thin areas and the next practice step. Local only."
+            onClick={() => setView("map")}
+          />
         </div>
         <h3 className="mt-12 font-mono text-xs uppercase tracking-[0.18em] text-margin">
           Where the open ground is
@@ -51,7 +56,7 @@ export function Home() {
           >
             the guide
           </button>
-          , labelled by strength.
+          , labelled by strength. The personal map is the first local view of the private picture.
         </p>
       </section>
       <Parts />
