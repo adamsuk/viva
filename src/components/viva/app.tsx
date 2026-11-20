@@ -5,6 +5,7 @@ import { ChangelogEntries } from "@/components/viva/changelog";
 import { Disclosure } from "@/components/viva/disclosure";
 import { Guide } from "@/components/viva/guide";
 import { Home } from "@/components/viva/home";
+import { PersonalMap } from "@/components/viva/personal-map";
 import { Rail } from "@/components/viva/rail";
 import { SetupPanel } from "@/components/viva/setup";
 import { Stage } from "@/components/viva/stage";
@@ -61,6 +62,7 @@ export function VivaApp() {
               <Tab label="Home" active={view === "home"} onClick={() => setView("home")} />
               <Tab label="Walk the PR" active={view === "walk"} onClick={() => setView("walk")} />
               <Tab label="The guide" active={view === "guide"} onClick={() => setView("guide")} />
+              <Tab label="Personal map" active={view === "map"} onClick={() => setView("map")} />
             </nav>
             <Progress count={count} />
           </div>
@@ -88,6 +90,8 @@ export function VivaApp() {
             <Stage />
           </div>
         </div>
+      ) : view === "map" ? (
+        <PersonalMap />
       ) : (
         <Guide />
       )}
