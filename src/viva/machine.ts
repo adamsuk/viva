@@ -1,4 +1,4 @@
-// guide.json, llms.txt and llms-full.txt, built from the same data as the page.
+// guide.json, llms.txt, llms-full.txt, and log-schemas.json, built from the same data as the page.
 // vite.config.ts emits them at build time, versioned by the newest CHANGELOG.md date.
 
 import { parseChangelog } from "./changelog.ts";
@@ -24,12 +24,14 @@ import {
   toolsForRecommendation,
   type ReferenceId,
 } from "./model.ts";
+import { LOG_SCHEMAS, LOG_SCHEMAS_URL } from "./log-schemas.ts";
 
 export const SITE_URL = "https://adamsuk.github.io/viva/";
 export const GUIDE_JSON_URL = `${SITE_URL}guide.json`;
 export const LLMS_TXT_URL = `${SITE_URL}llms.txt`;
 export const LLMS_FULL_URL = `${SITE_URL}llms-full.txt`;
 export const REPO_URL = "https://github.com/adamsuk/viva";
+export { LOG_SCHEMAS_URL };
 
 export function guideVersion(changelog: string): string {
   return parseChangelog(changelog).releases[0]?.date ?? "unversioned";
@@ -167,6 +169,7 @@ export function buildLlmsTxt(changelog: string): string {
 
 - [guide.json](${GUIDE_JSON_URL}): Stations, recommendations, claims with strength labels, tools, sources, and an audit prompt
 - [llms-full.txt](${LLMS_FULL_URL}): The guide in Markdown
+- [log-schemas.json](${LOG_SCHEMAS_URL}): Versioned log formats the viva skill should write
 
 ## Optional
 
@@ -222,5 +225,6 @@ export function machineFiles(changelog: string): Record<string, string> {
     "guide.json": JSON.stringify(buildGuideJson(changelog), null, 2) + "\n",
     "llms.txt": buildLlmsTxt(changelog),
     "llms-full.txt": buildLlmsFull(changelog),
+    "log-schemas.json": JSON.stringify({ schemas: LOG_SCHEMAS, url: LOG_SCHEMAS_URL }, null, 2) + "\n",
   };
 }

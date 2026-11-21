@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-21
+
+### Changed
+
+- Personal map imports keep the latest selection, show a retry message when a file cannot be read, and link to the published MVP notes. Negated grades such as `not understood` now surface confident misses.
+
 ## 2026-10-30
 
 ### Added

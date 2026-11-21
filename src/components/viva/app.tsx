@@ -5,8 +5,10 @@ import { ChangelogEntries } from "@/components/viva/changelog";
 import { Disclosure } from "@/components/viva/disclosure";
 import { Guide } from "@/components/viva/guide";
 import { Home } from "@/components/viva/home";
+import { PersonalMap } from "@/components/viva/personal-map";
 import { Rail } from "@/components/viva/rail";
 import { SetupPanel } from "@/components/viva/setup";
+import { Skills } from "@/components/viva/skills";
 import { Stage } from "@/components/viva/stage";
 import { useHashRoute } from "@/components/viva/use-hash-route";
 
@@ -61,6 +63,8 @@ export function VivaApp() {
               <Tab label="Home" active={view === "home"} onClick={() => setView("home")} />
               <Tab label="Walk the PR" active={view === "walk"} onClick={() => setView("walk")} />
               <Tab label="The guide" active={view === "guide"} onClick={() => setView("guide")} />
+              <Tab label="Personal map" active={view === "map"} onClick={() => setView("map")} />
+              <Tab label="Skills" active={view === "skills"} onClick={() => setView("skills")} />
             </nav>
             <Progress count={count} />
           </div>
@@ -88,6 +92,10 @@ export function VivaApp() {
             <Stage />
           </div>
         </div>
+      ) : view === "map" ? (
+        <PersonalMap />
+      ) : view === "skills" ? (
+        <Skills />
       ) : (
         <Guide />
       )}
