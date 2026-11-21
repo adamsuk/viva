@@ -17,7 +17,7 @@ test("guide.json carries every recommendation and parses", () => {
   assert.equal(json.name, "Viva");
   const recs = json.stations.flatMap((s: { recommendations: unknown[] }) => s.recommendations);
   assert.equal(recs.length, RECOMMENDATIONS.length);
-  assert.deepEqual(Object.keys(files).sort(), ["guide.json", "llms-full.txt", "llms.txt"]);
+  assert.deepEqual(Object.keys(files).sort(), ["guide.json", "llms-full.txt", "llms.txt", "log-schemas.json"]);
 });
 
 test("the audit prompt stays read-only and away from individuals", () => {
