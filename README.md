@@ -8,9 +8,11 @@ Live at https://adamsuk.github.io/viva/ once GitHub Pages is turned on for the r
 
 What changed and why: [CHANGELOG.md](CHANGELOG.md). Every PR adds an entry; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Personal map (MVP)
+## Personal map and skills (MVP)
 
-A local-first view for single users. Install the [viva skill](https://github.com/adamsuk/viva-skills), run `/viva`, then open the site and drop `~/.agents/viva-log.md` (or paste it). See thin areas and the next practice step. No account. Nothing leaves the machine.
+A local-first view for single users. Install the [viva skills](https://github.com/adamsuk/viva-skills) (`viva` for one check, `viva-assess` for a batch), run them, then open the site and drop `~/.agents/viva-log.md` (or paste it). See thin areas and the next practice step. No account. Nothing leaves the machine.
+
+The site also has a Skills page with copy-paste install commands for Claude Code, Cursor, Codex and Grok, plus a note on serving the skills over MCP.
 
 Details: [docs/mvp-platform.md](docs/mvp-platform.md).
 
@@ -30,6 +32,7 @@ Details: [docs/mvp-platform.md](docs/mvp-platform.md).
 | [src/components/viva/stage.tsx](src/components/viva/stage.tsx) | What you do at each station |
 | [src/components/viva/guide.tsx](src/components/viva/guide.tsx) | The guide: stages, the loop table, recommendations, evidence, prior art |
 | [src/components/viva/personal-map.tsx](src/components/viva/personal-map.tsx) | Local personal map that reads the skill log |
+| [src/components/viva/skills.tsx](src/components/viva/skills.tsx) | Skills page with install commands for common agents |
 
 The docs are generated from the model by `npm run docs`, and a test fails if they drift.
 
