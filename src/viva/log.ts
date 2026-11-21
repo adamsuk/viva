@@ -1,6 +1,7 @@
-// Parser and light analysis for the personal log written by the viva skill.
-// Format (one line):
-// YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live
+// Version-aware parser for the personal log written by the viva skill.
+// Schemas live in log-schemas.ts so the skill can fetch them from the platform.
+
+import { LOG_SCHEMAS, schemaFor, type LogSchema } from "./log-schemas.ts";
 
 export interface VivaEntry {
   timestamp: string;
@@ -14,6 +15,7 @@ export interface VivaEntry {
   scope: string;
   live: string;
   raw: string;
+  schemaVersion: string;
 }
 
 export type GradeKind = "understood" | "partial" | "missed" | "other";
@@ -38,23 +40,33 @@ export function parseVivaLog(text: string): VivaEntry[] {
 }
 
 function parseLine(line: string): VivaEntry | null {
-  const parts = line.split(" | ").map((p) => p.trim());
-  if (parts.length < 10) return null;
-  const [timestamp, skillVersion, repo, branchOrPr, commitOrRef, topic, confidenceRaw, grade, scope, live] =
-    parts;
+  // Peek at the version (always field 2 under current conventions) so we can pick a schema.
+  const rough = line.split(" | ").map((p) => p.trim());
+  if (rough.length < 2) return null;
+  const version = rough[1];
+  const schema = schemaFor(version) ?? LOG_SCHEMAS[0];
+  return parseWithSchema(line, schema);
+}
+
+function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
+  const parts = line.split(schema.delimiter).map((p) => p.trim());
+  if (parts.length < schema.fields.length) return null;
+  const get = (name: string) => parts[schema.fields.findIndex((f) => f.name === name)] ?? "";
+  const confidenceRaw = get("confidence");
   const confidence = Number(confidenceRaw);
   return {
-    timestamp,
-    skillVersion,
-    repo,
-    branchOrPr,
-    commitOrRef,
-    topic,
+    timestamp: get("timestamp"),
+    skillVersion: get("skillVersion"),
+    repo: get("repo"),
+    branchOrPr: get("branchOrPr"),
+    commitOrRef: get("commitOrRef"),
+    topic: get("topic"),
     confidence: Number.isFinite(confidence) ? confidence : confidenceRaw,
-    grade,
-    scope,
-    live,
+    grade: get("grade"),
+    scope: get("scope"),
+    live: get("live"),
     raw: line,
+    schemaVersion: schema.version,
   };
 }
 
