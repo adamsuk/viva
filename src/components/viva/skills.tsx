@@ -62,7 +62,7 @@ export function Skills() {
 
       <h3 className="mt-10 font-display text-2xl">Install for a specific agent</h3>
       <p className="mt-2 text-sm text-muted">
-        Add <code className="font-mono text-xs">-a <agent></code> and optionally <code className="font-mono text-xs">-g</code> for global.
+        Add <code className="font-mono text-xs">-a AGENT</code> and optionally <code className="font-mono text-xs">-g</code> for global.
       </p>
       <ul className="mt-4 space-y-3">
         {AGENTS.map((a) => {
