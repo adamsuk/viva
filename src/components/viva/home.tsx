@@ -36,6 +36,11 @@ export function Home() {
             detail="Drop the viva skill log. See thin areas and the next practice step. Local only."
             onClick={() => setView("map")}
           />
+          <Cta
+            label="Skills"
+            detail="Install the viva skills in Claude Code, Cursor, Codex or Grok. Keep them updated."
+            onClick={() => setView("skills")}
+          />
         </div>
         <h3 className="mt-12 font-mono text-xs uppercase tracking-[0.18em] text-margin">
           Where the open ground is
