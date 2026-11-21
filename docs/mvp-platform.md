@@ -2,7 +2,7 @@
 
 Personal practice companion for single users who want to upskill, maintain skills, build good AI habits, and identify knowledge gaps — with almost zero friction.
 
-Linked to the working skill: [adamsuk/viva-skills](https://github.com/adamsuk/viva-skills) (`/viva` skill, currently 0.3.1).
+Linked to the working skill: [adamsuk/viva-skills](https://github.com/adamsuk/viva-skills) (`/viva` skill).
 
 ## Why this MVP
 
@@ -34,15 +34,16 @@ A local-first personal view that sits on top of the existing skill log.
 
 ### Explicit links to viva-skills
 
-- Platform always points at the skill repo and the exact log format the skill writes.
-- Skill README points at the platform for the map view.
-- Shared log format is the contract.
+- Platform owns the versioned log schemas. The skill can fetch them.
+- Skill README / instructions point at the platform for both the map and the schema.
+- Shared log format is the contract; versions are handled row by row.
 
 ## MVP scope (what ships first)
 
 | Piece | Included | Deferred |
 |-------|----------|----------|
-| Log parser (skill format) | Yes | |
+| Versioned log schemas (platform is source of truth) | Yes | |
+| Version-aware parser (row by row) | Yes | |
 | Personal map: topics / areas, confidence vs grade, recent entries | Yes | |
 | Gap signals (confident-wrong, repeated partial/miss on same topic) | Yes | |
 | Next-step suggestions drawn from research recommendations | Yes | |
@@ -54,9 +55,13 @@ A local-first personal view that sits on top of the existing skill log.
 | Team / shared views | | Never for MVP (privacy) |
 | Hard gates or PR comments | | Out of scope |
 
-## Log contract (from skill)
+## Log contract
 
-One line per check:
+The platform publishes the schemas at:
+
+https://adamsuk.github.io/viva/log-schemas.json
+
+Current schema (0.3.1):
 
 ```
 YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live
@@ -68,19 +73,22 @@ Example:
 2026-11-20 17:25 | 0.3.1 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live
 ```
 
-Platform reads this, groups by topic (and later by file/area if we enrich the skill), and surfaces patterns.
+The parser reads each line, looks at the version field, and applies the matching schema. Mixed versions in one file are fine. Unknown versions fall back to the oldest known schema and are still displayed.
+
+The skill is told to fetch the schema from the platform (or fall back to the known format) before logging.
 
 ## Tech approach (matches existing stack)
 
 - Same React + Vite + TypeScript + Tailwind + Zustand as the research site.
-- New route or page: `/map` or a personal view.
+- New route or page: `#map`.
 - Pure client-side parser; no backend for MVP.
-- Generated from the same model style where useful.
+- Schemas emitted as a static asset at build time so the skill can fetch them.
 
 ## Success for MVP
 
 - A user who has run `/viva` a handful of times can open the platform, drop the log, and immediately see where they are solid vs thin and one suggested next habit.
 - Onboarding is "install skill + open page + drop file".
 - Nothing leaves the machine by default.
+- Future skill versions can change the log format by adding a schema here; old lines still parse.
 
-See the implementation starting in this branch.
+See the implementation on this branch.
