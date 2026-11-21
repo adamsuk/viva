@@ -8,6 +8,14 @@ Live at https://adamsuk.github.io/viva/ once GitHub Pages is turned on for the r
 
 What changed and why: [CHANGELOG.md](CHANGELOG.md). Every PR adds an entry; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Personal map and skills (MVP)
+
+A local-first view for single users. Install the [viva skills](https://github.com/adamsuk/viva-skills) (`viva` for one check, `viva-assess` for a batch), run them, then open the site and drop `~/.agents/viva-log.md` (or paste it). See thin areas and the next practice step. No account. Nothing leaves the machine.
+
+The site also has a Skills page with copy-paste install commands for Claude Code, Cursor, Codex and Grok, plus a note on serving the skills over MCP.
+
+Details: [docs/mvp-platform.md](docs/mvp-platform.md).
+
 ## Where to read
 
 | File | What it is |
@@ -15,6 +23,7 @@ What changed and why: [CHANGELOG.md](CHANGELOG.md). Every PR adds an entry; see 
 | [docs/claims.md](docs/claims.md) | What the evidence says, labelled by strength |
 | [docs/recommendations.md](docs/recommendations.md) | What to do, labelled Best practice or Cutting edge |
 | [docs/prior-art.md](docs/prior-art.md) | Tools that already exist, and the gaps they leave |
+| [docs/mvp-platform.md](docs/mvp-platform.md) | Personal map MVP: scope, log contract, what is deferred |
 | [EXPERIMENTS.md](EXPERIMENTS.md) | Open questions and the log of tests to run |
 | [src/viva/model.ts](src/viva/model.ts) | The source for all of the above: stations, the PR, sources, claims, recommendations, tools, the setup options and the factory notes |
 | [src/viva/store.ts](src/viva/store.ts) | How the PR advances, and what gets sent back |
@@ -22,6 +31,8 @@ What changed and why: [CHANGELOG.md](CHANGELOG.md). Every PR adds an entry; see 
 | [src/viva/machine.ts](src/viva/machine.ts) | guide.json, llms.txt and llms-full.txt, and the read-only audit prompt |
 | [src/components/viva/stage.tsx](src/components/viva/stage.tsx) | What you do at each station |
 | [src/components/viva/guide.tsx](src/components/viva/guide.tsx) | The guide: stages, the loop table, recommendations, evidence, prior art |
+| [src/components/viva/personal-map.tsx](src/components/viva/personal-map.tsx) | Local personal map that reads the skill log |
+| [src/components/viva/skills.tsx](src/components/viva/skills.tsx) | Skills page with install commands for common agents |
 
 The docs are generated from the model by `npm run docs`, and a test fails if they drift.
 
