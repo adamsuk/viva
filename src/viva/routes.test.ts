@@ -7,6 +7,7 @@ test("views have hash routes", () => {
   assert.deepEqual(routeFromHash("#walk"), { view: "walk", anchor: null });
   assert.deepEqual(routeFromHash("#/guide"), { view: "guide", anchor: null });
   assert.deepEqual(routeFromHash("#map"), { view: "map", anchor: null });
+  assert.deepEqual(routeFromHash("#skills"), { view: "skills", anchor: null });
 });
 
 test("sections in the guide have anchors", () => {
@@ -23,6 +24,7 @@ test("hashes round trip", () => {
     "#walk",
     "#guide",
     "#map",
+    "#skills",
     "#parts",
     "#evidence",
     "#prior-art",
