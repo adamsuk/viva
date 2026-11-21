@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   SAMPLE_LOG,
   gradeKind,
@@ -9,6 +9,7 @@ import {
 } from "@/viva/log";
 
 export function PersonalMap() {
+  const inputGeneration = useRef(0);
   const [text, setText] = useState("");
   const [entries, setEntries] = useState<VivaEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -21,12 +22,34 @@ export function PersonalMap() {
     setError(parsed.length ? null : "No valid entries. Expected the viva skill log format.");
   }
 
+  function loadLatest(raw: string, sample = false) {
+    inputGeneration.current++;
+    load(raw, sample);
+  }
+
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const file = e.currentTarget.files?.[0];
     if (!file) return;
+    const generation = ++inputGeneration.current;
+    e.currentTarget.value = "";
+
     const reader = new FileReader();
-    reader.onload = () => load(String(reader.result ?? ""));
-    reader.readAsText(file);
+    const onReadFailure = () => {
+      if (generation !== inputGeneration.current) return;
+      setEntries([]);
+      setUsedSample(false);
+      setError("Could not read the log file. Try selecting it again or paste the log.");
+    };
+
+    reader.onload = () => {
+      if (generation === inputGeneration.current) load(String(reader.result ?? ""));
+    };
+    reader.onerror = onReadFailure;
+    try {
+      reader.readAsText(file);
+    } catch {
+      onReadFailure();
+    }
   }
 
   const topics = summariseTopics(entries);
@@ -65,7 +88,7 @@ export function PersonalMap() {
           />
           <button
             type="button"
-            onClick={() => load(text)}
+            onClick={() => loadLatest(text)}
             className="mt-2 min-h-11 rounded-2xl border border-accent bg-accent px-4 text-sm text-on-accent"
           >
             Read paste
@@ -77,7 +100,7 @@ export function PersonalMap() {
         No log yet?{" "}
         <button
           type="button"
-          onClick={() => load(SAMPLE_LOG, true)}
+          onClick={() => loadLatest(SAMPLE_LOG, true)}
           className="text-accent underline underline-offset-4"
         >
           Try the sample
@@ -129,7 +152,10 @@ export function PersonalMap() {
           <p className="mt-8 max-w-2xl text-sm text-muted">
             Practice, not proof. A model can answer most of these questions, so a pass is a signal for you,
             not a security control. The map stays on this machine. See{" "}
-            <a href="docs/mvp-platform.md" className="text-accent underline underline-offset-4">
+            <a
+              href="https://github.com/adamsuk/viva/blob/98bd330b09ed4f040e2a36b07195cc566a05aa97/docs/mvp-platform.md"
+              className="text-accent underline underline-offset-4"
+            >
               the MVP notes
             </a>{" "}
             and the{" "}

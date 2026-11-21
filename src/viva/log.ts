@@ -59,8 +59,9 @@ function parseLine(line: string): VivaEntry | null {
 }
 
 export function gradeKind(grade: string): GradeKind {
-  const g = grade.toLowerCase();
-  if (g.includes("understood") || g === "ok" || g === "pass") return "understood";
+  const g = grade.trim().toLowerCase();
+  if (g === "understood" || g === "ok" || g === "pass") return "understood";
+  if (/\b(?:not|never|no longer|\w+n['’]t)[\s-]+(?:\w+[\s-]+)*understood\b/.test(g)) return "missed";
   if (g.includes("partial") || g.includes("some")) return "partial";
   if (g.includes("miss") || g.includes("wrong") || g.includes("fail")) return "missed";
   return "other";
