@@ -1,7 +1,13 @@
 // Version-aware parser for the personal log written by the viva skill.
 // Schemas live in log-schemas.ts so the skill can fetch them from the platform.
 
-import { LOG_SCHEMAS, schemaFor, type LogSchema } from "./log-schemas.ts";
+import {
+  AI_USE_VALUES,
+  LOG_SCHEMAS,
+  schemaFor,
+  type AiUse,
+  type LogSchema,
+} from "./log-schemas.ts";
 
 export interface VivaEntry {
   timestamp: string;
@@ -14,6 +20,8 @@ export interface VivaEntry {
   grade: string;
   scope: string;
   live: string;
+  /** How the change was made (schema 0.4+). `unknown` for older lines or unreadable values. */
+  aiUse: AiUse;
   raw: string;
   schemaVersion: string;
 }
@@ -79,9 +87,38 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
     grade: get("grade"),
     scope: get("scope"),
     live: get("live"),
+    aiUse: readAiUse(get("aiUse")),
     raw: line,
     schemaVersion: schema.version,
   };
+}
+
+function readAiUse(value: string): AiUse {
+  const v = value.trim().toLowerCase();
+  return (AI_USE_VALUES as readonly string[]).includes(v) ? (v as AiUse) : "unknown";
+}
+
+export interface AiUseRow {
+  aiUse: AiUse;
+  understood: number;
+  partial: number;
+  missed: number;
+  total: number;
+}
+
+/** Grades by how the change was made, in a fixed order, for the kinds that have checks. */
+export function byAiUse(entries: VivaEntry[]): AiUseRow[] {
+  return AI_USE_VALUES.map((aiUse) => {
+    const row: AiUseRow = { aiUse, understood: 0, partial: 0, missed: 0, total: 0 };
+    for (const e of entries) {
+      const kind = gradeKind(e.grade);
+      if (e.aiUse !== aiUse) continue;
+      if (kind !== "understood" && kind !== "partial" && kind !== "missed") continue;
+      row[kind]++;
+      row.total++;
+    }
+    return row;
+  }).filter((r) => r.total > 0);
 }
 
 export function gradeKind(grade: string): GradeKind {

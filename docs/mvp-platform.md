@@ -79,6 +79,16 @@ Example:
 
 The parser reads each line and looks at the version field (always field 2). It picks the schema whose `version` matches exactly, else the schema whose `skillVersions` covers it (an exact version or `major.minor.x`, so `0.3.x` covers 0.3.3). Mixed versions in one file are fine. Unknown versions fall back to the oldest known schema, are still displayed, and are counted on the map. Lines that cannot be read are skipped and counted, never silently dropped. Topics are grouped ignoring case and repeated spaces.
 
+Schema 0.4.0, written by skill versions 0.4.x, adds an 11th field, `ai-use`: how the change was made.
+
+```
+YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use
+```
+
+`ai-use` is one of `hand` (written without AI), `explained` (AI used to ask why or about concepts), `generated-then-understood` (AI wrote it, then the author made sure they could rewrite it), `delegated` (AI wrote it from a short ask and it was accepted), `agent` (an agent built it from a work order), or `unknown`. 0.3 lines read as `unknown`. Why this field: in a randomized trial, how people used AI predicted understanding more than whether they used it ([Anthropic, 2026](https://www.anthropic.com/research/AI-assistance-coding-skills)). The map shows grades by `ai-use` once any line records it.
+
+`grade` can also be `disputed` (the user disputed the question and the agent agreed it was faulty); the map leaves disputed checks out of its signals. `scope` can also be `review-comment` (a check on a bot review comment before forwarding it).
+
 A skill change that alters the line format must add a new schema version here, then bump the skill to a new minor version. Existing versions never change, so old lines keep parsing.
 
 The skill is told to fetch the schema from the platform (or fall back to the known format) before logging.

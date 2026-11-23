@@ -17,33 +17,63 @@ export interface LogSchema {
   notes?: string;
 }
 
+/** How the change was made. The research says this predicts understanding more than AI use itself. */
+export const AI_USE_VALUES = [
+  "hand",
+  "explained",
+  "generated-then-understood",
+  "delegated",
+  "agent",
+  "unknown",
+] as const;
+
+export type AiUse = (typeof AI_USE_VALUES)[number];
+
+const FIELDS_0_3: LogField[] = [
+  { name: "timestamp", description: "YYYY-MM-DD HH:MM", example: "2026-11-20 17:25" },
+  { name: "skillVersion", description: "Skill version that wrote the line", example: "0.3.1" },
+  { name: "repo", description: "owner/repo", example: "adamsuk/viva-skills" },
+  { name: "branchOrPr", description: "branch name or pr-N", example: "pr-42" },
+  { name: "commitOrRef", description: "commit SHA or ref", example: "a1b2c3d" },
+  { name: "topic", description: "short topic of the check", example: "skill logging path" },
+  { name: "confidence", description: "1-5 or high/medium/low", example: "4" },
+  {
+    name: "grade",
+    description: "understood / partial / missed / disputed (or free text)",
+    example: "understood",
+  },
+  {
+    name: "scope",
+    description: "session | checkout | last-commit | uncommitted | named | review-comment",
+    example: "session",
+  },
+  { name: "live", description: "live | partly-live | hazard", example: "live" },
+];
+
 export const LOG_SCHEMAS: LogSchema[] = [
   {
     version: "0.3.1",
     skillVersions: "0.3.x",
     description: "Current viva skill log line (skill 0.3.x)",
     delimiter: " | ",
-    fields: [
-      { name: "timestamp", description: "YYYY-MM-DD HH:MM", example: "2026-11-20 17:25" },
-      { name: "skillVersion", description: "Skill version that wrote the line", example: "0.3.1" },
-      { name: "repo", description: "owner/repo", example: "adamsuk/viva-skills" },
-      { name: "branchOrPr", description: "branch name or pr-N", example: "pr-42" },
-      { name: "commitOrRef", description: "commit SHA or ref", example: "a1b2c3d" },
-      { name: "topic", description: "short topic of the check", example: "skill logging path" },
-      { name: "confidence", description: "1-5 or high/medium/low", example: "4" },
-      {
-        name: "grade",
-        description: "understood / partial / missed (or free text)",
-        example: "understood",
-      },
-      {
-        name: "scope",
-        description: "session | checkout | last-commit | uncommitted | named",
-        example: "session",
-      },
-      { name: "live", description: "live | partly-live | hazard", example: "live" },
-    ],
+    fields: FIELDS_0_3,
     notes: "One line per check. Version is always the second field so the parser can dispatch.",
+  },
+  {
+    version: "0.4.0",
+    skillVersions: "0.4.x",
+    description: "Viva skill log line (skill 0.4.x): the 0.3 fields plus how the change was made",
+    delimiter: " | ",
+    fields: [
+      ...FIELDS_0_3,
+      {
+        name: "aiUse",
+        description: `How the change was made: ${AI_USE_VALUES.join(" | ")}`,
+        example: "generated-then-understood",
+      },
+    ],
+    notes:
+      "One line per check. Version is always the second field so the parser can dispatch. aiUse: hand (written without AI), explained (AI used to ask why or about concepts), generated-then-understood (AI wrote it, then the author made sure they could rewrite it), delegated (AI wrote it from a short ask and it was accepted), agent (an agent built it from a work order), unknown.",
   },
 ];
 
