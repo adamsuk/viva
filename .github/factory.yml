@@ -7,7 +7,8 @@ agents:
   # CodeRabbit has not been confirmed on this repo yet, so PR Reviewer's review is the gate.
   # Switch to coderabbit once it reviews a PR here.
   review_bot: none
-  # The same three commands test.yml runs on every pull request.
+  # The same three commands test.yml runs. test.yml runs only on pull requests into main
+  # until adamsuk/viva#10 widens it to every pull request, so stacked PRs are tested locally.
   test_command: npm run typecheck && npm run lint && npm test
 
 # Check names from the pull-request workflows: the test job in test.yml and
