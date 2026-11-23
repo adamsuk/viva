@@ -10,6 +10,10 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 - Factory onboarding. `.github/factory.yml` (builder and reviewer roles, agents never merge, test command `npm run typecheck && npm run lint && npm test`, required checks `test` and `changelog`), `AGENTS.md` with the build, content, log-schema and privacy rules, `CODEOWNERS`, a task issue template and a size-label caller pinned by SHA. Why: so the software factory can triage, build and review changes here under its shared rules ([adamsuk/software-factory#455](https://github.com/adamsuk/software-factory/issues/455), [#2](https://github.com/adamsuk/viva/pull/2)).
 
+### Changed
+
+- CI: every action in `pages.yml` is pinned by commit SHA, the build job is read-only (`contents: read`, `pages: read`) and only the deploy job, which never runs on pull requests, gets `pages: write` and `id-token: write`. `upload-pages-artifact` moves from v3 to v5.0.0 and `checkout` to v7.0.1, the versions Line already deploys with. The test workflow now runs on every pull request, not only those into `main`, so stacked pull requests are tested too. Why: the factory's shared rules pin actions by full SHA, and pull-request builds had no need for write tokens ([adamsuk/software-factory#469](https://github.com/adamsuk/software-factory/issues/469), [#10](https://github.com/adamsuk/viva/pull/10)).
+
 ## 2026-11-21
 
 ### Changed

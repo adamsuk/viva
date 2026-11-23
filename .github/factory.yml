@@ -8,8 +8,7 @@ agents:
   # no blocking CodeRabbit findings plus PR Reviewer's review (AGENTS.md section 6). It skips
   # stacked PRs whose base is not main; ask it with `@coderabbitai review` on size/L and XL ones.
   review_bot: coderabbit
-  # The same three commands test.yml runs. test.yml runs only on pull requests into main
-  # until adamsuk/viva#10 widens it to every pull request, so stacked PRs are tested locally.
+  # The same three commands test.yml runs on every pull request.
   test_command: npm run typecheck && npm run lint && npm test
 
 # Check names from the pull-request workflows: the test job in test.yml and
