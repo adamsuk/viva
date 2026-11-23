@@ -113,6 +113,7 @@ export function PersonalMap() {
 
   const topics = summariseTopics(entries);
   const thin = topics.filter((t) => t.thin);
+  const disputed = entries.filter((e) => gradeKind(e.grade) === "disputed").length;
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -215,6 +216,7 @@ export function PersonalMap() {
             {entries.length} check{entries.length === 1 ? "" : "s"} · {topics.length} topic
             {topics.length === 1 ? "" : "s"}
             {thin.length ? ` · ${thin.length} thin` : ""}
+            {disputed ? ` · ${disputed} disputed` : ""}
             {usedSample ? " · sample data" : ""}
           </p>
           {(skipped > 0 || unknownVersion > 0) && (
@@ -272,6 +274,13 @@ export function PersonalMap() {
             ))}
           </ul>
 
+          {disputed > 0 && (
+            <p className="mt-4 max-w-2xl text-sm text-muted">
+              Struck-through checks were disputed: the question was faulty, so they count for
+              nothing here. Many disputes in one area say more about the questions than about you.
+            </p>
+          )}
+
           <p className="mt-8 max-w-2xl text-sm text-muted">
             Practice, not proof. A model can answer most of these questions, so a pass is a signal
             for you, not a security control. The map stays in this browser. See{" "}
@@ -328,7 +337,9 @@ function TopicRow({ summary }: { summary: TopicSummary }) {
               ? "bg-pass-bg text-pass"
               : kind === "missed"
                 ? "bg-fail-bg text-fail"
-                : "bg-hold-bg text-hold";
+                : kind === "disputed"
+                  ? "border border-line text-faint line-through"
+                  : "bg-hold-bg text-hold";
           return (
             <span key={i} className={`rounded px-1.5 py-0.5 ${cls}`}>
               {e.grade} ({e.confidence})

@@ -98,3 +98,17 @@ test("topics differing only in case or spacing are one topic", () => {
   assert.equal(topics[0].entries.length, 2);
   assert.equal(topics[0].thin, true);
 });
+
+test("disputed checks are not a gap and not confident-wrong", () => {
+  assert.equal(gradeKind("disputed"), "disputed");
+  assert.equal(gradeKind(" Disputed "), "disputed");
+  const log = [
+    "2026-11-21 10:00 | 0.3.3 | r | main | a | cache | 5 | disputed | session | live",
+    "2026-11-21 11:00 | 0.3.3 | r | main | a | cache | 4 | disputed | session | live",
+    "2026-11-21 12:00 | 0.3.3 | r | main | a | cache | 3 | understood | session | live",
+  ].join("\n");
+  const [topic] = summariseTopics(parseVivaLog(log));
+  assert.equal(topic.thin, false);
+  assert.equal(topic.highConfidenceMiss, false);
+  assert.equal(topic.entries.length, 3);
+});
