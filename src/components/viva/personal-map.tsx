@@ -119,7 +119,7 @@ export function PersonalMap() {
     }
   }
 
-  const topics = summariseTopics(entries);
+  const topics = summariseTopics(entries, new Date());
   const thin = topics.filter((t) => t.thin);
   const habit = habitFor(topics);
   const disputed = entries.filter((e) => gradeKind(e.grade) === "disputed").length;
@@ -331,7 +331,7 @@ export function PersonalMap() {
 }
 
 function TopicRow({ summary }: { summary: TopicSummary }) {
-  const { topic, entries, last, highConfidenceMiss, thin } = summary;
+  const { topic, entries, last, highConfidenceMiss, thin, recheck } = summary;
   return (
     <li className="py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -340,6 +340,11 @@ function TopicRow({ summary }: { summary: TopicSummary }) {
           {thin && (
             <span className="ml-2 font-mono text-xs uppercase tracking-wider text-margin">
               thin
+            </span>
+          )}
+          {recheck && (
+            <span className="ml-2 font-mono text-xs uppercase tracking-wider text-accent">
+              re-check
             </span>
           )}
           {highConfidenceMiss && (
@@ -370,6 +375,12 @@ function TopicRow({ summary }: { summary: TopicSummary }) {
           );
         })}
       </div>
+      {recheck && (
+        <p className="mt-1 text-sm text-muted">
+          Missed a week or more ago. Run /viva on your next change here, or ask your agent for one
+          question on this area.
+        </p>
+      )}
       <p className="mt-1 font-mono text-xs text-faint">
         {last.repo} · {last.branchOrPr} · {last.scope} · {last.live}
       </p>

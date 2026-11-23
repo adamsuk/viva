@@ -202,3 +202,23 @@ test("every next step and the habit name a recommendation in the guide", async (
   assert.equal(habitFor(summariseTopics(parseVivaLog(SAMPLE_LOG))), null);
   assert.equal(habitFor([]), null);
 });
+
+test("a missed topic is due a re-check after seven days, not before", () => {
+  const line = (ts: string, grade: string) =>
+    `${ts} | 0.3.3 | r | main | a | cache | 3 | ${grade} | session | live`;
+  const at = (log: string, now: string) =>
+    summariseTopics(parseVivaLog(log), new Date(Date.parse(now)))[0].recheck;
+  const missed = line("2026-11-10 09:00", "missed");
+  assert.equal(at(missed, "2026-11-16T09:00:00"), false);
+  assert.equal(at(missed, "2026-11-17T09:00:00"), true);
+  assert.equal(at(line("2026-11-10 09:00", "partial"), "2026-11-20T09:00:00"), true);
+  assert.equal(
+    at(`${missed}\n${line("2026-11-11 09:00", "understood")}`, "2026-11-30T09:00:00"),
+    false,
+  );
+  assert.equal(
+    at(`${missed}\n${line("2026-11-11 09:00", "disputed")}`, "2026-11-30T09:00:00"),
+    true,
+  );
+  assert.equal(summariseTopics(parseVivaLog(missed))[0].recheck, false);
+});
