@@ -1,0 +1,29 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { AGENTS, SKILLS, agentCommands, installCommand } from "./skills-data.ts";
+
+test("both skills are listed, each with at least one feature", () => {
+  assert.deepEqual(
+    SKILLS.map((s) => s.name),
+    ["viva", "viva-assess"],
+  );
+  for (const s of SKILLS) assert.ok(s.features.length > 0, s.name);
+});
+
+test("viva lists dispute, review comments and how the change was made", () => {
+  const viva = SKILLS.find((s) => s.name === "viva")!;
+  const text = viva.features.map((f) => `${f.name} ${f.text}`).join(" ");
+  assert.match(text, /dispute/i);
+  assert.match(text, /review comment/i);
+  assert.match(text, /how the change was made/i);
+});
+
+test("every agent gets an install command for both skills", () => {
+  for (const a of AGENTS) {
+    assert.deepEqual(agentCommands(a.flag), [
+      `npx skills add adamsuk/viva-skills --skill viva --agent ${a.flag} -g`,
+      `npx skills add adamsuk/viva-skills --skill viva-assess --agent ${a.flag} -g`,
+    ]);
+  }
+  assert.equal(installCommand("viva"), "npx skills add adamsuk/viva-skills --skill viva");
+});
