@@ -9,6 +9,8 @@ export interface LogField {
 
 export interface LogSchema {
   version: string;
+  /** Skill versions that write this format, as an exact version or `major.minor.x`. */
+  skillVersions: string;
   description: string;
   delimiter: string;
   fields: LogField[];
@@ -18,6 +20,7 @@ export interface LogSchema {
 export const LOG_SCHEMAS: LogSchema[] = [
   {
     version: "0.3.1",
+    skillVersions: "0.3.x",
     description: "Current viva skill log line (skill 0.3.x)",
     delimiter: " | ",
     fields: [
@@ -28,8 +31,16 @@ export const LOG_SCHEMAS: LogSchema[] = [
       { name: "commitOrRef", description: "commit SHA or ref", example: "a1b2c3d" },
       { name: "topic", description: "short topic of the check", example: "skill logging path" },
       { name: "confidence", description: "1-5 or high/medium/low", example: "4" },
-      { name: "grade", description: "understood / partial / missed (or free text)", example: "understood" },
-      { name: "scope", description: "session | checkout | last-commit | uncommitted | named", example: "session" },
+      {
+        name: "grade",
+        description: "understood / partial / missed (or free text)",
+        example: "understood",
+      },
+      {
+        name: "scope",
+        description: "session | checkout | last-commit | uncommitted | named",
+        example: "session",
+      },
       { name: "live", description: "live | partly-live | hazard", example: "live" },
     ],
     notes: "One line per check. Version is always the second field so the parser can dispatch.",
@@ -38,8 +49,20 @@ export const LOG_SCHEMAS: LogSchema[] = [
 
 export const CURRENT_LOG_SCHEMA = LOG_SCHEMAS[LOG_SCHEMAS.length - 1];
 
+/** True when `version` is covered by `pattern` (an exact version, or `major.minor.x`). */
+export function coversVersion(pattern: string, version: string): boolean {
+  if (pattern === version) return true;
+  const m = /^(\d+)\.(\d+)\.x$/.exec(pattern);
+  if (!m) return false;
+  return new RegExp(`^${m[1]}\\.${m[2]}\\.\\d+$`).test(version);
+}
+
+/** The schema for a line's version: an exact schema version first, then a covered skill version. */
 export function schemaFor(version: string): LogSchema | undefined {
-  return LOG_SCHEMAS.find((s) => s.version === version);
+  return (
+    LOG_SCHEMAS.find((s) => s.version === version) ??
+    LOG_SCHEMAS.find((s) => coversVersion(s.skillVersions, version))
+  );
 }
 
 /** Stable URL the skill (or any agent) can fetch. Emitted at build time. */

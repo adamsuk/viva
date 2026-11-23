@@ -29,23 +29,37 @@ export interface TopicSummary {
   nextSteps: string[];
 }
 
-export function parseVivaLog(text: string): VivaEntry[] {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith("#"))
-    .map(parseLine)
-    .filter((e): e is VivaEntry => e !== null)
-    .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+export interface ParsedLog {
+  entries: VivaEntry[];
+  /** Lines that could not be read as a check (too few fields). */
+  skipped: number;
+  /** Lines whose version matched no schema; read with the oldest schema. */
+  unknownVersion: number;
 }
 
-function parseLine(line: string): VivaEntry | null {
-  // Peek at the version (always field 2 under current conventions) so we can pick a schema.
-  const rough = line.split(" | ").map((p) => p.trim());
-  if (rough.length < 2) return null;
-  const version = rough[1];
-  const schema = schemaFor(version) ?? LOG_SCHEMAS[0];
-  return parseWithSchema(line, schema);
+export function parseVivaLog(text: string): VivaEntry[] {
+  return parseVivaLogDetailed(text).entries;
+}
+
+export function parseVivaLogDetailed(text: string): ParsedLog {
+  let skipped = 0;
+  let unknownVersion = 0;
+  const entries: VivaEntry[] = [];
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const rough = line.split(" | ").map((p) => p.trim());
+    const known = rough.length >= 2 ? schemaFor(rough[1]) : undefined;
+    const entry = rough.length >= 2 ? parseWithSchema(line, known ?? LOG_SCHEMAS[0]) : null;
+    if (!entry) {
+      skipped++;
+      continue;
+    }
+    if (!known) unknownVersion++;
+    entries.push(entry);
+  }
+  entries.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  return { entries, skipped, unknownVersion };
 }
 
 function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
@@ -86,20 +100,27 @@ export function isHighConfidence(c: number | string): boolean {
   return s === "high" || s === "sure" || s === "5" || s === "4";
 }
 
+/** Case- and spacing-insensitive key, so "Webhook retry" and " webhook  retry" are one topic. */
+export function topicKey(topic: string): string {
+  return topic.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function groupByTopic(entries: VivaEntry[]): Map<string, VivaEntry[]> {
   const map = new Map<string, VivaEntry[]>();
   for (const e of entries) {
-    const list = map.get(e.topic) ?? [];
+    const key = topicKey(e.topic);
+    const list = map.get(key) ?? [];
     list.push(e);
-    map.set(e.topic, list);
+    map.set(key, list);
   }
   return map;
 }
 
 export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
   return Array.from(groupByTopic(entries).entries())
-    .map(([topic, list]) => {
+    .map(([, list]) => {
       const last = list[list.length - 1];
+      const topic = last.topic.trim().replace(/\s+/g, " ");
       const highConfidenceMiss = list.some(
         (e) => isHighConfidence(e.confidence) && gradeKind(e.grade) === "missed",
       );

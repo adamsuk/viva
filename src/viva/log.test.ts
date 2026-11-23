@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { gradeKind, mergeLogs, parseVivaLog, summariseTopics, SAMPLE_LOG } from "./log.ts";
+import {
+  gradeKind,
+  mergeLogs,
+  parseVivaLog,
+  parseVivaLogDetailed,
+  summariseTopics,
+  SAMPLE_LOG,
+} from "./log.ts";
 
 test("parses the skill log format", () => {
   const entries = parseVivaLog(SAMPLE_LOG);
@@ -57,4 +64,37 @@ test("merging logs keeps existing lines first and drops duplicates and comments"
 
 test("merging nothing gives an empty log", () => {
   assert.equal(mergeLogs("", "\n# only a comment\n"), "");
+});
+
+test("a skill version in a covered range uses that schema", async () => {
+  const { schemaFor } = await import("./log-schemas.ts");
+  assert.equal(schemaFor("0.3.3")?.version, "0.3.1");
+  assert.equal(schemaFor("0.3.1")?.version, "0.3.1");
+  assert.equal(schemaFor("0.30.1"), undefined);
+  assert.equal(schemaFor("9.9.9"), undefined);
+});
+
+test("the detailed parse counts skipped lines and unknown versions", () => {
+  const log = [
+    "2026-11-21 10:00 | 0.3.3 | r | main | a | t | 4 | understood | session | live",
+    "2026-11-21 11:00 | 9.0.0 | r | main | a | t | 4 | understood | session | live",
+    "2026-11-21 12:00 | 0.3.3 | too | short",
+    "not a log line",
+  ].join("\n");
+  const parsed = parseVivaLogDetailed(log);
+  assert.equal(parsed.entries.length, 2);
+  assert.equal(parsed.skipped, 2);
+  assert.equal(parsed.unknownVersion, 1);
+});
+
+test("topics differing only in case or spacing are one topic", () => {
+  const log = [
+    "2026-11-21 10:00 | 0.3.3 | r | main | a | Webhook retry | 4 | partial | session | live",
+    "2026-11-22 10:00 | 0.3.3 | r | main | a |  webhook  retry | 4 | missed | session | live",
+  ].join("\n");
+  const topics = summariseTopics(parseVivaLog(log));
+  assert.equal(topics.length, 1);
+  assert.equal(topics[0].topic, "webhook retry");
+  assert.equal(topics[0].entries.length, 2);
+  assert.equal(topics[0].thin, true);
 });

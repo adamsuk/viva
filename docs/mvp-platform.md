@@ -65,7 +65,7 @@ The platform publishes the schemas at:
 
 https://adamsuk.github.io/viva/log-schemas.json
 
-Current schema (0.3.1):
+Current schema (0.3.1), written by skill versions 0.3.x (the `viva` skill is at 0.3.3):
 
 ```
 YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live
@@ -74,10 +74,12 @@ YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-t
 Example:
 
 ```
-2026-11-20 17:25 | 0.3.1 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live
+2026-11-20 17:25 | 0.3.3 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live
 ```
 
-The parser reads each line, looks at the version field, and applies the matching schema. Mixed versions in one file are fine. Unknown versions fall back to the oldest known schema and are still displayed.
+The parser reads each line and looks at the version field (always field 2). It picks the schema whose `version` matches exactly, else the schema whose `skillVersions` covers it (an exact version or `major.minor.x`, so `0.3.x` covers 0.3.3). Mixed versions in one file are fine. Unknown versions fall back to the oldest known schema, are still displayed, and are counted on the map. Lines that cannot be read are skipped and counted, never silently dropped. Topics are grouped ignoring case and repeated spaces.
+
+A skill change that alters the line format must add a new schema version here, then bump the skill to a new minor version. Existing versions never change, so old lines keep parsing.
 
 The skill is told to fetch the schema from the platform (or fall back to the known format) before logging.
 
