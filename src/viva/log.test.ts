@@ -6,7 +6,9 @@ import {
   calibrationSentence,
   confidenceBucket,
   gradeKind,
+  habitFor,
   mergeLogs,
+  nextStepsFor,
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
@@ -174,4 +176,29 @@ test("schema 0.4 adds how the change was made, and 0.3 lines still parse", async
     { aiUse: "delegated", understood: 0, partial: 0, missed: 1, total: 1 },
     { aiUse: "unknown", understood: 1, partial: 1, missed: 0, total: 2 },
   ]);
+});
+
+test("every next step and the habit name a recommendation in the guide", async () => {
+  const { RECOMMENDATIONS } = await import("./model.ts");
+  const ids = new Set(RECOMMENDATIONS.map((r) => r.id));
+  const steps = [
+    ...nextStepsFor("t", true, true),
+    ...nextStepsFor("t", true, false),
+    ...nextStepsFor("t", false, false),
+  ];
+  for (const s of steps) assert.ok(ids.has(s.recommendationId), s.recommendationId);
+  const solid = summariseTopics(
+    parseVivaLog(
+      [
+        "2026-11-21 10:00 | 0.3.3 | r | main | a | cache | 4 | understood | session | live",
+        "2026-11-22 10:00 | 0.3.3 | r | main | a | cache | 4 | understood | session | live",
+        "2026-11-20 10:00 | 0.3.3 | r | main | a | auth | 3 | understood | session | live",
+      ].join("\n"),
+    ),
+  );
+  const habit = habitFor(solid);
+  assert.ok(habit && ids.has(habit.recommendationId));
+  assert.match(habit!.text, /“auth”/);
+  assert.equal(habitFor(summariseTopics(parseVivaLog(SAMPLE_LOG))), null);
+  assert.equal(habitFor([]), null);
 });

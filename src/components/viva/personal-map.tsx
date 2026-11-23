@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { RECOMMENDATIONS } from "@/viva/model";
 import {
   LOG_STORAGE_KEY,
   byAiUse,
@@ -6,12 +7,14 @@ import {
   calibrationSentence,
   SAMPLE_LOG,
   gradeKind,
+  habitFor,
   mergeLogs,
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
   type AiUseRow,
   type CalibrationRow,
+  type NextStep,
   type TopicSummary,
 } from "@/viva/log";
 
@@ -118,6 +121,7 @@ export function PersonalMap() {
 
   const topics = summariseTopics(entries);
   const thin = topics.filter((t) => t.thin);
+  const habit = habitFor(topics);
   const disputed = entries.filter((e) => gradeKind(e.grade) === "disputed").length;
 
   return (
@@ -262,13 +266,24 @@ export function PersonalMap() {
                   <li key={t.topic}>
                     <p className="font-medium">{t.topic}</p>
                     <ul className="mt-1 list-disc pl-5 text-sm text-muted">
-                      {t.nextSteps.map((s) => (
-                        <li key={s}>{s}</li>
+                      {t.steps.map((s) => (
+                        <li key={s.text}>
+                          <StepText step={s} />
+                        </li>
                       ))}
                     </ul>
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {habit && (
+            <div className="mt-6 rounded-2xl border border-line bg-paper p-4">
+              <h3 className="font-display text-2xl">Next habit</h3>
+              <p className="mt-1 text-sm text-muted">
+                <StepText step={habit} />
+              </p>
             </div>
           )}
 
@@ -484,5 +499,27 @@ function ByAiUse({ rows }: { rows: AiUseRow[] }) {
         </p>
       )}
     </section>
+  );
+}
+
+/** A step, with the label of the guide recommendation behind it and a link to the guide. */
+function StepText({ step }: { step: NextStep }) {
+  const rec = RECOMMENDATIONS.find((r) => r.id === step.recommendationId);
+  return (
+    <>
+      {step.text}
+      {rec && (
+        <>
+          {" "}
+          <a
+            href="#guide"
+            title={rec.text}
+            className="font-mono text-xs whitespace-nowrap text-accent underline underline-offset-4"
+          >
+            {rec.maturity}: {rec.id}
+          </a>
+        </>
+      )}
+    </>
   );
 }

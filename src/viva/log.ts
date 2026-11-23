@@ -35,6 +35,8 @@ export interface TopicSummary {
   highConfidenceMiss: boolean;
   thin: boolean;
   nextSteps: string[];
+  /** The same steps, each with the guide recommendation behind it. */
+  steps: NextStep[];
 }
 
 export interface ParsedLog {
@@ -234,7 +236,8 @@ export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
         last,
         highConfidenceMiss,
         thin,
-        nextSteps: nextStepsFor(topic, thin, highConfidenceMiss),
+        steps: nextStepsFor(topic, thin, highConfidenceMiss),
+        nextSteps: nextStepsFor(topic, thin, highConfidenceMiss).map((s) => s.text),
       };
     })
     .sort(
@@ -242,19 +245,58 @@ export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
     );
 }
 
-function nextStepsFor(topic: string, thin: boolean, highConfidenceMiss: boolean): string[] {
-  if (!thin) return ["Keep the habit: one more viva on the next change in this area."];
-  const steps = [
-    `Next change in “${topic}” by hand, or generate then make sure you could rewrite it.`,
-    "Ask the agent why, not only to produce.",
+/** A next step and the guide recommendation it comes from (an id in RECOMMENDATIONS). */
+export interface NextStep {
+  text: string;
+  recommendationId: string;
+}
+
+export function nextStepsFor(
+  topic: string,
+  thin: boolean,
+  highConfidenceMiss: boolean,
+): NextStep[] {
+  if (!thin)
+    return [
+      {
+        text: "Keep the habit: one more viva on the next change in this area.",
+        recommendationId: "one-small-question",
+      },
+    ];
+  const steps: NextStep[] = [
+    {
+      text: `Next change in “${topic}” by hand, or generate then make sure you could rewrite it.`,
+      recommendationId: "keep-learning-work",
+    },
+    { text: "Ask the agent why, not only to produce.", recommendationId: "use-ai-to-understand" },
   ];
   if (highConfidenceMiss) {
-    steps.unshift(
-      "Confident and wrong — the strongest signal. Slow down and re-explain before the next edit.",
-    );
+    steps.unshift({
+      text: "Confident and wrong — the strongest signal. Slow down and re-explain before the next edit.",
+      recommendationId: "ask-confidence",
+    });
   }
-  steps.push("Pair or do a short walkthrough with someone solid in the area.");
+  steps.push({
+    text: "Pair or do a short walkthrough with someone solid in the area.",
+    recommendationId: "gaps-to-pairing",
+  });
   return steps;
+}
+
+/**
+ * One habit for when nothing is thin: keep checking, and now and then write a change by hand in
+ * the area checked least (fewest checks, then the oldest). Null with no topics.
+ */
+export function habitFor(topics: TopicSummary[]): NextStep | null {
+  if (!topics.length || topics.some((t) => t.thin)) return null;
+  const least = [...topics].sort(
+    (a, b) =>
+      a.entries.length - b.entries.length || a.last.timestamp.localeCompare(b.last.timestamp),
+  )[0];
+  return {
+    text: `Keep the habit: run a viva on your next AI-assisted change. Once in a while, write a change in “${least.topic}” by hand. It is the area you have checked least.`,
+    recommendationId: "keep-learning-work",
+  };
 }
 
 /** localStorage key for the personal map's lines. They never leave this browser. */
