@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-23
+
+### Added
+
+- Factory onboarding. `.github/factory.yml` (builder and reviewer roles, agents never merge, test command `npm run typecheck && npm run lint && npm test`, required checks `test` and `changelog`), `AGENTS.md` with the build, content, log-schema and privacy rules, `CODEOWNERS`, a task issue template and a size-label caller pinned by SHA. Why: so the software factory can triage, build and review changes here under its shared rules ([adamsuk/software-factory#455](https://github.com/adamsuk/software-factory/issues/455), [#2](https://github.com/adamsuk/viva/pull/2)).
+
 ## 2026-11-21
 
 ### Changed
