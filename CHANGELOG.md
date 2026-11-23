@@ -10,6 +10,10 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 - Factory onboarding. `.github/factory.yml` (builder and reviewer roles, agents never merge, test command `npm run typecheck && npm run lint && npm test`, required checks `test` and `changelog`), `AGENTS.md` with the build, content, log-schema and privacy rules, `CODEOWNERS`, a task issue template and a size-label caller pinned by SHA. Why: so the software factory can triage, build and review changes here under its shared rules ([adamsuk/software-factory#455](https://github.com/adamsuk/software-factory/issues/455), [#2](https://github.com/adamsuk/viva/pull/2)).
 
+### Changed
+
+- The personal map keeps your log in this browser. New pastes and files add to what is kept, with identical lines kept once, or replace it if you choose. Download log saves a copy and Forget this log deletes it. The page says what is kept, where and until when, and still works for the visit when the browser blocks storage. The sample is shown but never kept. Why: both viva skills tell users without a filesystem that the map stores the log in the browser, but it forgot everything on reload, so no picture could build up over time. The research says to say what is collected and for how long before collecting it ([adamsuk/software-factory#458](https://github.com/adamsuk/software-factory/issues/458), [#3](https://github.com/adamsuk/viva/pull/3)).
+
 ## 2026-11-21
 
 ### Changed

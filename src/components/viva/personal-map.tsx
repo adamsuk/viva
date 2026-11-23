@@ -1,30 +1,90 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  LOG_STORAGE_KEY,
   SAMPLE_LOG,
   gradeKind,
+  mergeLogs,
   parseVivaLog,
   summariseTopics,
   type TopicSummary,
-  type VivaEntry,
 } from "@/viva/log";
+
+type Mode = "add" | "replace";
+
+/** The kept lines live in this browser's localStorage only. Nothing is sent anywhere. */
+function readStored(): { text: string; ok: boolean } {
+  try {
+    return { text: window.localStorage.getItem(LOG_STORAGE_KEY) ?? "", ok: true };
+  } catch {
+    return { text: "", ok: false };
+  }
+}
+
+function writeStored(text: string): boolean {
+  try {
+    if (text) window.localStorage.setItem(LOG_STORAGE_KEY, text);
+    else window.localStorage.removeItem(LOG_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function PersonalMap() {
   const inputGeneration = useRef(0);
   const [text, setText] = useState("");
-  const [entries, setEntries] = useState<VivaEntry[]>([]);
+  const [log, setLog] = useState(() => (typeof window === "undefined" ? "" : readStored().text));
+  const [storageOk, setStorageOk] = useState(true);
+  const [mode, setMode] = useState<Mode>("add");
   const [error, setError] = useState<string | null>(null);
-  const [usedSample, setUsedSample] = useState(false);
+  const [sample, setSample] = useState<string | null>(null);
+  const usedSample = sample !== null;
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !readStored().ok) setStorageOk(false);
+  }, []);
+
+  const entries = parseVivaLog(sample ?? log);
 
   function load(raw: string, sample = false) {
-    const parsed = parseVivaLog(raw);
-    setEntries(parsed);
-    setUsedSample(sample);
-    setError(parsed.length ? null : "No valid entries. Expected the viva skill log format.");
+    if (!parseVivaLog(raw).length) {
+      setError("No valid entries. Expected the viva skill log format.");
+      return;
+    }
+    setError(null);
+    if (sample) {
+      // The sample is for trying the map. It is shown, never kept.
+      setSample(raw);
+      return;
+    }
+    const next = mergeLogs(mode === "replace" ? "" : log, raw);
+    setSample(null);
+    setLog(next);
+    setStorageOk(writeStored(next));
   }
 
   function loadLatest(raw: string, sample = false) {
     inputGeneration.current++;
     load(raw, sample);
+  }
+
+  function forget() {
+    inputGeneration.current++;
+    setLog("");
+    setText("");
+    setSample(null);
+    setError(null);
+    setStorageOk(writeStored(""));
+  }
+
+  function download() {
+    const blob = new Blob([log], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "viva-log.md";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -36,8 +96,6 @@ export function PersonalMap() {
     const reader = new FileReader();
     const onReadFailure = () => {
       if (generation !== inputGeneration.current) return;
-      setEntries([]);
-      setUsedSample(false);
       setError("Could not read the log file. Try selecting it again or paste the log.");
     };
 
@@ -68,13 +126,15 @@ export function PersonalMap() {
         >
           viva skill
         </a>{" "}
-        (<code className="font-mono text-sm">~/.agents/viva-log.md</code>). Local only. No account. No
-        shared view.
+        (<code className="font-mono text-sm">~/.agents/viva-log.md</code>). Kept in this browser
+        only. No account. No shared view.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <label className="block rounded-2xl border border-line bg-paper p-4">
-          <span className="font-mono text-xs uppercase tracking-[0.18em] text-margin">Log file</span>
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-margin">
+            Log file
+          </span>
           <input type="file" accept=".md,.txt" onChange={onFile} className="mt-2 block text-sm" />
         </label>
         <div className="rounded-2xl border border-line bg-paper p-4">
@@ -96,6 +156,40 @@ export function PersonalMap() {
         </div>
       </div>
 
+      <fieldset className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+        <legend className="sr-only">What new lines do</legend>
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="radio"
+            name="map-mode"
+            checked={mode === "add"}
+            onChange={() => setMode("add")}
+          />
+          Add to what is kept
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="radio"
+            name="map-mode"
+            checked={mode === "replace"}
+            onChange={() => setMode("replace")}
+          />
+          Replace it
+        </label>
+      </fieldset>
+
+      <p className="mt-4 max-w-2xl text-sm text-muted">
+        What is kept: the log lines you add here (date, skill version, repo, branch or PR, commit,
+        topic, confidence, grade, scope), in this browser&apos;s local storage on this device, until
+        you press Forget this log. Nothing is sent anywhere. The sample is never kept.
+      </p>
+      {!storageOk && (
+        <p className="mt-2 border-l-4 border-margin bg-hold-bg px-4 py-2 text-sm">
+          This browser will not let the page keep the log (private mode or storage full). The map
+          works for this visit only. Use Download log to keep a copy.
+        </p>
+      )}
+
       <p className="mt-4 text-sm text-muted">
         No log yet?{" "}
         <button
@@ -106,11 +200,13 @@ export function PersonalMap() {
           Try the sample
         </button>
         , or install the skill with{" "}
-        <code className="font-mono text-xs">npx skills add adamsuk/viva-skills --skill viva</code> and run{" "}
-        <code className="font-mono text-xs">/viva</code>.
+        <code className="font-mono text-xs">npx skills add adamsuk/viva-skills --skill viva</code>{" "}
+        and run <code className="font-mono text-xs">/viva</code>.
       </p>
 
-      {error && <p className="mt-4 border-l-4 border-margin bg-fail-bg px-4 py-2 text-sm">{error}</p>}
+      {error && (
+        <p className="mt-4 border-l-4 border-margin bg-fail-bg px-4 py-2 text-sm">{error}</p>
+      )}
 
       {entries.length > 0 && (
         <>
@@ -120,6 +216,24 @@ export function PersonalMap() {
             {thin.length ? ` · ${thin.length} thin` : ""}
             {usedSample ? " · sample data" : ""}
           </p>
+          {!usedSample && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={download}
+                className="min-h-11 rounded-2xl border border-line px-4 text-sm"
+              >
+                Download log
+              </button>
+              <button
+                type="button"
+                onClick={forget}
+                className="min-h-11 rounded-2xl border border-margin px-4 text-sm text-margin"
+              >
+                Forget this log
+              </button>
+            </div>
+          )}
 
           {thin.length > 0 && (
             <div className="mt-6 rounded-2xl border border-margin bg-hold-bg p-4">
@@ -150,8 +264,8 @@ export function PersonalMap() {
           </ul>
 
           <p className="mt-8 max-w-2xl text-sm text-muted">
-            Practice, not proof. A model can answer most of these questions, so a pass is a signal for you,
-            not a security control. The map stays on this machine. See{" "}
+            Practice, not proof. A model can answer most of these questions, so a pass is a signal
+            for you, not a security control. The map stays in this browser. See{" "}
             <a
               href="https://github.com/adamsuk/viva/blob/98bd330b09ed4f040e2a36b07195cc566a05aa97/docs/mvp-platform.md"
               className="text-accent underline underline-offset-4"
@@ -183,7 +297,9 @@ function TopicRow({ summary }: { summary: TopicSummary }) {
         <p className="font-medium">
           {topic}
           {thin && (
-            <span className="ml-2 font-mono text-xs uppercase tracking-wider text-margin">thin</span>
+            <span className="ml-2 font-mono text-xs uppercase tracking-wider text-margin">
+              thin
+            </span>
           )}
           {highConfidenceMiss && (
             <span className="ml-2 font-mono text-xs uppercase tracking-wider text-fail">

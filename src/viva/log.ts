@@ -73,7 +73,8 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
 export function gradeKind(grade: string): GradeKind {
   const g = grade.trim().toLowerCase();
   if (g === "understood" || g === "ok" || g === "pass") return "understood";
-  if (/\b(?:not|never|no longer|\w+n['’]t)[\s-]+(?:\w+[\s-]+)*understood\b/.test(g)) return "missed";
+  if (/\b(?:not|never|no longer|\w+n['’]t)[\s-]+(?:\w+[\s-]+)*understood\b/.test(g))
+    return "missed";
   if (g.includes("partial") || g.includes("some")) return "partial";
   if (g.includes("miss") || g.includes("wrong") || g.includes("fail")) return "missed";
   return "other";
@@ -104,8 +105,7 @@ export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
       );
       const recent = list.slice(-3);
       const thin =
-        highConfidenceMiss ||
-        recent.filter((e) => gradeKind(e.grade) !== "understood").length >= 2;
+        highConfidenceMiss || recent.filter((e) => gradeKind(e.grade) !== "understood").length >= 2;
       return {
         topic,
         entries: list,
@@ -115,7 +115,9 @@ export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
         nextSteps: nextStepsFor(topic, thin, highConfidenceMiss),
       };
     })
-    .sort((a, b) => Number(b.thin) - Number(a.thin) || b.last.timestamp.localeCompare(a.last.timestamp));
+    .sort(
+      (a, b) => Number(b.thin) - Number(a.thin) || b.last.timestamp.localeCompare(a.last.timestamp),
+    );
 }
 
 function nextStepsFor(topic: string, thin: boolean, highConfidenceMiss: boolean): string[] {
@@ -125,10 +127,32 @@ function nextStepsFor(topic: string, thin: boolean, highConfidenceMiss: boolean)
     "Ask the agent why, not only to produce.",
   ];
   if (highConfidenceMiss) {
-    steps.unshift("Confident and wrong — the strongest signal. Slow down and re-explain before the next edit.");
+    steps.unshift(
+      "Confident and wrong — the strongest signal. Slow down and re-explain before the next edit.",
+    );
   }
   steps.push("Pair or do a short walkthrough with someone solid in the area.");
   return steps;
+}
+
+/** localStorage key for the personal map's lines. They never leave this browser. */
+export const LOG_STORAGE_KEY = "viva:personal-map:log";
+
+/**
+ * Merge new log text into what is already kept. Blank and comment lines are dropped, identical
+ * lines (after trimming) are kept once, and the existing order comes first. Unparseable lines are
+ * kept so a newer skill's lines survive until the platform learns their schema.
+ */
+export function mergeLogs(existing: string, incoming: string): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of `${existing}\n${incoming}`.split("\n")) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#") || seen.has(line)) continue;
+    seen.add(line);
+    out.push(line);
+  }
+  return out.length ? `${out.join("\n")}\n` : "";
 }
 
 export const SAMPLE_LOG = `# Sample viva skill log (for trying the map)
