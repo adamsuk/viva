@@ -13,6 +13,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 ### Changed
 
 - The personal map keeps your log in this browser. New pastes and files add to what is kept, with identical lines kept once, or replace it if you choose. Download log saves a copy and Forget this log deletes it. The page says what is kept, where and until when, and still works for the visit when the browser blocks storage. The sample is shown but never kept. Why: both viva skills tell users without a filesystem that the map stores the log in the browser, but it forgot everything on reload, so no picture could build up over time. The research says to say what is collected and for how long before collecting it ([adamsuk/software-factory#458](https://github.com/adamsuk/software-factory/issues/458), [#3](https://github.com/adamsuk/viva/pull/3)).
+- Log schemas say which skill versions write them (`skillVersions`, for example `0.3.x`), and the parser picks a schema by exact version, then by that range. Lines from the current `viva` skill (0.3.3) now match the 0.3 schema instead of falling back. The map says how many lines it skipped or read with an unknown version, and groups topics ignoring case and extra spaces. Why: the skill writes 0.3.3 but the platform only knew 0.3.1, and malformed lines vanished without a word, so a user could not tell why checks were missing ([adamsuk/software-factory#459](https://github.com/adamsuk/software-factory/issues/459), [#4](https://github.com/adamsuk/viva/pull/4)).
 
 ## 2026-11-21
 

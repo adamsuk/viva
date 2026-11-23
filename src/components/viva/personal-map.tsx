@@ -5,6 +5,7 @@ import {
   gradeKind,
   mergeLogs,
   parseVivaLog,
+  parseVivaLogDetailed,
   summariseTopics,
   type TopicSummary,
 } from "@/viva/log";
@@ -44,7 +45,7 @@ export function PersonalMap() {
     if (typeof window !== "undefined" && !readStored().ok) setStorageOk(false);
   }, []);
 
-  const entries = parseVivaLog(sample ?? log);
+  const { entries, skipped, unknownVersion } = parseVivaLogDetailed(sample ?? log);
 
   function load(raw: string, sample = false) {
     if (!parseVivaLog(raw).length) {
@@ -216,6 +217,14 @@ export function PersonalMap() {
             {thin.length ? ` · ${thin.length} thin` : ""}
             {usedSample ? " · sample data" : ""}
           </p>
+          {(skipped > 0 || unknownVersion > 0) && (
+            <p className="mt-2 text-sm text-muted">
+              {skipped > 0 &&
+                `${skipped} line${skipped === 1 ? "" : "s"} skipped: not in the viva log format. `}
+              {unknownVersion > 0 &&
+                `${unknownVersion} line${unknownVersion === 1 ? "" : "s"} from a skill version this page does not know yet, read with the oldest format.`}
+            </p>
+          )}
           {!usedSample && (
             <div className="mt-3 flex flex-wrap gap-2">
               <button
