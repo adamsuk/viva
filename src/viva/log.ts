@@ -34,6 +34,8 @@ export interface TopicSummary {
   last: VivaEntry;
   highConfidenceMiss: boolean;
   thin: boolean;
+  /** The latest counted check was partial or missed, a week or more ago: time to try again. */
+  recheck: boolean;
   nextSteps: string[];
   /** The same steps, each with the guide recommendation behind it. */
   steps: NextStep[];
@@ -217,7 +219,28 @@ export function groupByTopic(entries: VivaEntry[]): Map<string, VivaEntry[]> {
   return map;
 }
 
-export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
+export const RECHECK_AFTER_DAYS = 7;
+
+function checkTime(timestamp: string): number {
+  return Date.parse(`${timestamp.trim().replace(" ", "T")}:00`);
+}
+
+/**
+ * True when the latest non-disputed check on a topic was partial or missed and is at least
+ * RECHECK_AFTER_DAYS old at `now`. Practice tests improve later recall, so a missed area is worth
+ * a second try rather than being flagged once and left.
+ */
+export function needsRecheck(counted: VivaEntry[], now: Date): boolean {
+  const latest = counted[counted.length - 1];
+  if (!latest) return false;
+  const kind = gradeKind(latest.grade);
+  if (kind !== "partial" && kind !== "missed") return false;
+  const at = checkTime(latest.timestamp);
+  if (!Number.isFinite(at)) return false;
+  return now.getTime() - at >= RECHECK_AFTER_DAYS * 24 * 60 * 60 * 1000;
+}
+
+export function summariseTopics(entries: VivaEntry[], now?: Date): TopicSummary[] {
   return Array.from(groupByTopic(entries).entries())
     .map(([, list]) => {
       const last = list[list.length - 1];
@@ -236,6 +259,7 @@ export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
         last,
         highConfidenceMiss,
         thin,
+        recheck: now ? needsRecheck(counted, now) : false,
         steps: nextStepsFor(topic, thin, highConfidenceMiss),
         nextSteps: nextStepsFor(topic, thin, highConfidenceMiss).map((s) => s.text),
       };
