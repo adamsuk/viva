@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-23
+
+### Changed
+
+- CI: every action in `pages.yml` is pinned by commit SHA, the build job is read-only (`contents: read`, `pages: read`) and only the deploy job, which never runs on pull requests, gets `pages: write` and `id-token: write`. `upload-pages-artifact` moves from v3 to v5.0.0 and `checkout` to v7.0.1, the versions Line already deploys with. The test workflow now runs on every pull request, not only those into `main`, so stacked pull requests are tested too. Why: the factory's shared rules pin actions by full SHA, and pull-request builds had no need for write tokens ([adamsuk/software-factory#469](https://github.com/adamsuk/software-factory/issues/469), [#10](https://github.com/adamsuk/viva/pull/10)).
+
 ## 2026-11-21
 
 ### Changed
