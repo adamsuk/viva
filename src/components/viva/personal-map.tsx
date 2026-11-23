@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   LOG_STORAGE_KEY,
+  byAiUse,
   calibration,
   calibrationSentence,
   SAMPLE_LOG,
@@ -9,6 +10,7 @@ import {
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
+  type AiUseRow,
   type CalibrationRow,
   type TopicSummary,
 } from "@/viva/log";
@@ -271,6 +273,7 @@ export function PersonalMap() {
           )}
 
           <Calibration rows={calibration(entries)} />
+          <ByAiUse rows={byAiUse(entries)} />
 
           <h3 className="mt-10 font-display text-2xl">Topics</h3>
           <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -406,6 +409,80 @@ function Calibration({ rows }: { rows: CalibrationRow[] }) {
         </tbody>
       </table>
       {sentence && <p className="mt-2 text-sm">{sentence}</p>}
+    </section>
+  );
+}
+
+const AI_USE_LABEL: Record<AiUseRow["aiUse"], string> = {
+  hand: "By hand",
+  explained: "Asked AI why",
+  "generated-then-understood": "Generated, then understood",
+  delegated: "Delegated to AI",
+  agent: "Built by an agent",
+  unknown: "Not recorded",
+};
+
+/**
+ * Grades by how the change was made. The research found the way AI is used predicts
+ * understanding: delegation scored lowest, asking why and generate-then-understand scored highest.
+ */
+function ByAiUse({ rows }: { rows: AiUseRow[] }) {
+  if (!rows.some((r) => r.aiUse !== "unknown")) return null;
+  const rate = (r: AiUseRow) => r.understood / r.total;
+  const delegated = rows.find((r) => r.aiUse === "delegated");
+  const others = rows.filter((r) => r.aiUse !== "delegated" && r.aiUse !== "unknown");
+  const othersTotal = others.reduce((n, r) => n + r.total, 0);
+  const othersRate = othersTotal
+    ? others.reduce((n, r) => n + r.understood, 0) / othersTotal
+    : null;
+  const delegatedWeaker = delegated && othersRate !== null && rate(delegated) < othersRate;
+  return (
+    <section aria-labelledby="ai-use-heading" className="mt-10">
+      <h3 id="ai-use-heading" className="font-display text-2xl">
+        By how the change was made
+      </h3>
+      <p className="mt-1 max-w-2xl text-sm text-muted">
+        In a randomized trial, how people used AI mattered more than whether they did: handing over
+        the task scored lowest on understanding, asking why or generating and then understanding
+        scored as well as coding by hand.{" "}
+        <a
+          href="https://www.anthropic.com/research/AI-assistance-coding-skills"
+          className="text-accent underline underline-offset-4"
+          target="_blank"
+          rel="noreferrer"
+        >
+          The study
+        </a>
+        .
+      </p>
+      <table className="mt-3 w-full max-w-xl text-left text-sm">
+        <thead>
+          <tr className="border-b border-line font-mono text-xs uppercase tracking-wider text-faint">
+            <th className="py-1 pr-2 font-normal">How</th>
+            <th className="py-1 pr-2 font-normal">Understood</th>
+            <th className="py-1 pr-2 font-normal">Partial</th>
+            <th className="py-1 pr-2 font-normal">Missed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.aiUse} className="border-b border-line">
+              <th scope="row" className="py-1 pr-2 font-medium">
+                {AI_USE_LABEL[r.aiUse]}
+              </th>
+              <td className="py-1 pr-2 text-pass">{r.understood}</td>
+              <td className="py-1 pr-2 text-hold">{r.partial}</td>
+              <td className="py-1 pr-2 text-fail">{r.missed}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {delegatedWeaker && (
+        <p className="mt-2 text-sm">
+          Your delegated changes were understood less often than the rest. Next time, ask the agent
+          why, or make sure you could rewrite what it wrote.
+        </p>
+      )}
     </section>
   );
 }

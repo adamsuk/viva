@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  byAiUse,
   calibration,
   calibrationSentence,
   confidenceBucket,
@@ -150,4 +151,27 @@ test("calibration counts confidence against grade, without disputed or unreadabl
     "When you were sure, you understood 1 of 3 times. 1 confident miss is the strongest signal to slow down.",
   );
   assert.equal(calibrationSentence(calibration([])), null);
+});
+
+test("schema 0.4 adds how the change was made, and 0.3 lines still parse", async () => {
+  const { CURRENT_LOG_SCHEMA, schemaFor } = await import("./log-schemas.ts");
+  assert.equal(CURRENT_LOG_SCHEMA.version, "0.4.0");
+  assert.equal(schemaFor("0.4.2")?.version, "0.4.0");
+  assert.equal(schemaFor("0.3.3")?.version, "0.3.1");
+  const log = [
+    "2026-11-21 10:00 | 0.3.3 | r | main | a | t1 | 4 | understood | session | live",
+    "2026-11-21 11:00 | 0.4.0 | r | main | a | t2 | 4 | missed | session | live | delegated",
+    "2026-11-21 12:00 | 0.4.0 | r | main | a | t3 | 2 | understood | session | live | Hand",
+    "2026-11-21 13:00 | 0.4.0 | r | main | a | t4 | 3 | partial | session | live | vibes",
+  ].join("\n");
+  const entries = parseVivaLog(log);
+  assert.deepEqual(
+    entries.map((e) => e.aiUse),
+    ["unknown", "delegated", "hand", "unknown"],
+  );
+  assert.deepEqual(byAiUse(entries), [
+    { aiUse: "hand", understood: 1, partial: 0, missed: 0, total: 1 },
+    { aiUse: "delegated", understood: 0, partial: 0, missed: 1, total: 1 },
+    { aiUse: "unknown", understood: 1, partial: 1, missed: 0, total: 2 },
+  ]);
 });
