@@ -9,6 +9,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 ### Added
 
 - Factory onboarding. `.github/factory.yml` (builder and reviewer roles, agents never merge, test command `npm run typecheck && npm run lint && npm test`, required checks `test` and `changelog`), `AGENTS.md` with the build, content, log-schema and privacy rules, `CODEOWNERS`, a task issue template and a size-label caller pinned by SHA. Why: so the software factory can triage, build and review changes here under its shared rules ([adamsuk/software-factory#455](https://github.com/adamsuk/software-factory/issues/455), [#2](https://github.com/adamsuk/viva/pull/2)).
+- A Confidence and grade table on the personal map: how often sure, middling and unsure answers were understood, partial or missed, with one sentence about the sure answers. Disputed checks and unreadable values are left out. No score and no ranking. Why: the MVP scope promised confidence against grade, and the research says the confident wrong answer is the signal that matters most; confidence-weighted questions help transfer (Moderate). A single check cannot show whether your confidence tracks your understanding; many can ([adamsuk/software-factory#463](https://github.com/adamsuk/software-factory/issues/463), [#6](https://github.com/adamsuk/viva/pull/6)). Source: [Sparck, Bjork and Bjork](https://doi.org/10.1186/s41235-016-0003-x) (2016).
 
 ### Changed
 

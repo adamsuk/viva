@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  calibration,
+  calibrationSentence,
+  confidenceBucket,
   gradeKind,
   mergeLogs,
   parseVivaLog,
@@ -111,4 +114,40 @@ test("disputed checks are not a gap and not confident-wrong", () => {
   assert.equal(topic.thin, false);
   assert.equal(topic.highConfidenceMiss, false);
   assert.equal(topic.entries.length, 3);
+});
+
+test("confidence buckets read numbers and words", () => {
+  assert.equal(confidenceBucket(1), "low");
+  assert.equal(confidenceBucket(3), "mid");
+  assert.equal(confidenceBucket(5), "high");
+  assert.equal(confidenceBucket("4"), "high");
+  assert.equal(confidenceBucket("Medium"), "mid");
+  assert.equal(confidenceBucket("low"), "low");
+  assert.equal(confidenceBucket("sure"), "high");
+  assert.equal(confidenceBucket(9), null);
+  assert.equal(confidenceBucket("maybe"), null);
+  assert.equal(confidenceBucket(""), null);
+});
+
+test("calibration counts confidence against grade, without disputed or unreadable grades", () => {
+  const log = [
+    "2026-11-21 10:00 | 0.3.3 | r | main | a | t1 | 5 | understood | session | live",
+    "2026-11-21 10:01 | 0.3.3 | r | main | a | t2 | high | missed | session | live",
+    "2026-11-21 10:02 | 0.3.3 | r | main | a | t3 | 4 | partial | session | live",
+    "2026-11-21 10:03 | 0.3.3 | r | main | a | t4 | 2 | understood | session | live",
+    "2026-11-21 10:04 | 0.3.3 | r | main | a | t5 | 5 | disputed | session | live",
+    "2026-11-21 10:05 | 0.3.3 | r | main | a | t6 | 5 | mostly understood | session | live",
+    "2026-11-21 10:06 | 0.3.3 | r | main | a | t7 | ? | missed | session | live",
+  ].join("\n");
+  const rows = calibration(parseVivaLog(log));
+  assert.deepEqual(rows, [
+    { bucket: "high", understood: 1, partial: 1, missed: 1, total: 3 },
+    { bucket: "mid", understood: 0, partial: 0, missed: 0, total: 0 },
+    { bucket: "low", understood: 1, partial: 0, missed: 0, total: 1 },
+  ]);
+  assert.equal(
+    calibrationSentence(rows),
+    "When you were sure, you understood 1 of 3 times. 1 confident miss is the strongest signal to slow down.",
+  );
+  assert.equal(calibrationSentence(calibration([])), null);
 });
