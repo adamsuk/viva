@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import {
   LOG_STORAGE_KEY,
+  calibration,
+  calibrationSentence,
   SAMPLE_LOG,
   gradeKind,
   mergeLogs,
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
+  type CalibrationRow,
   type TopicSummary,
 } from "@/viva/log";
 
@@ -267,6 +270,8 @@ export function PersonalMap() {
             </div>
           )}
 
+          <Calibration rows={calibration(entries)} />
+
           <h3 className="mt-10 font-display text-2xl">Topics</h3>
           <ul className="mt-3 divide-y divide-line border-y border-line">
             {topics.map((t) => (
@@ -351,5 +356,56 @@ function TopicRow({ summary }: { summary: TopicSummary }) {
         {last.repo} · {last.branchOrPr} · {last.scope} · {last.live}
       </p>
     </li>
+  );
+}
+
+const BUCKET_LABEL: Record<CalibrationRow["bucket"], string> = {
+  high: "Sure (4–5)",
+  mid: "Middling (3)",
+  low: "Unsure (1–2)",
+};
+
+/** Confidence against grade: does feeling sure track understanding? No score, no ranking. */
+function Calibration({ rows }: { rows: CalibrationRow[] }) {
+  const shown = rows.filter((r) => r.total > 0);
+  if (!shown.length) return null;
+  const sentence = calibrationSentence(rows);
+  return (
+    <section aria-labelledby="calibration-heading" className="mt-10">
+      <h3 id="calibration-heading" className="font-display text-2xl">
+        Confidence and grade
+      </h3>
+      <p className="mt-1 max-w-2xl text-sm text-muted">
+        Whether feeling sure went with understanding. A confident wrong answer is the signal that
+        matters most.
+      </p>
+      <table className="mt-3 w-full max-w-xl text-left text-sm">
+        <thead>
+          <tr className="border-b border-line font-mono text-xs uppercase tracking-wider text-faint">
+            <th className="py-1 pr-2 font-normal">Confidence</th>
+            <th className="py-1 pr-2 font-normal">Understood</th>
+            <th className="py-1 pr-2 font-normal">Partial</th>
+            <th className="py-1 pr-2 font-normal">Missed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((r) => (
+            <tr key={r.bucket} className="border-b border-line">
+              <th scope="row" className="py-1 pr-2 font-medium">
+                {BUCKET_LABEL[r.bucket]}
+              </th>
+              <td className="py-1 pr-2 text-pass">{r.understood}</td>
+              <td className="py-1 pr-2 text-hold">{r.partial}</td>
+              <td
+                className={`py-1 pr-2 ${r.bucket === "high" && r.missed ? "font-medium text-fail" : "text-fail"}`}
+              >
+                {r.missed}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {sentence && <p className="mt-2 text-sm">{sentence}</p>}
+    </section>
   );
 }

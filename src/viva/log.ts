@@ -107,6 +107,66 @@ export function topicKey(topic: string): string {
   return topic.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+export type ConfidenceBucket = "low" | "mid" | "high";
+
+/** 1-2 low, 3 mid, 4-5 high; the words low/medium/high (and sure) map the same way. */
+export function confidenceBucket(c: number | string): ConfidenceBucket | null {
+  const n = typeof c === "number" ? c : Number(String(c).trim());
+  if (Number.isFinite(n) && String(c).trim() !== "") {
+    if (n >= 1 && n <= 2) return "low";
+    if (n === 3) return "mid";
+    if (n >= 4 && n <= 5) return "high";
+    return null;
+  }
+  const s = String(c).trim().toLowerCase();
+  if (s === "low") return "low";
+  if (s === "medium" || s === "mid") return "mid";
+  if (s === "high" || s === "sure") return "high";
+  return null;
+}
+
+export interface CalibrationRow {
+  bucket: ConfidenceBucket;
+  understood: number;
+  partial: number;
+  missed: number;
+  total: number;
+}
+
+/**
+ * Confidence against grade. Disputed and unreadable grades, and unreadable confidences, are left
+ * out: they say nothing about whether confidence tracked understanding.
+ */
+export function calibration(entries: VivaEntry[]): CalibrationRow[] {
+  const rows: CalibrationRow[] = (["high", "mid", "low"] as const).map((bucket) => ({
+    bucket,
+    understood: 0,
+    partial: 0,
+    missed: 0,
+    total: 0,
+  }));
+  for (const e of entries) {
+    const bucket = confidenceBucket(e.confidence);
+    const kind = gradeKind(e.grade);
+    if (!bucket || (kind !== "understood" && kind !== "partial" && kind !== "missed")) continue;
+    const row = rows.find((r) => r.bucket === bucket)!;
+    row[kind]++;
+    row.total++;
+  }
+  return rows;
+}
+
+/** One plain sentence about the sure answers, or null when there are none. */
+export function calibrationSentence(rows: CalibrationRow[]): string | null {
+  const high = rows.find((r) => r.bucket === "high");
+  if (!high || high.total === 0) return null;
+  const times = high.total === 1 ? "time" : "times";
+  const base = `When you were sure, you understood ${high.understood} of ${high.total} ${times}.`;
+  return high.missed > 0
+    ? `${base} ${high.missed} confident miss${high.missed === 1 ? " is" : "es are"} the strongest signal to slow down.`
+    : base;
+}
+
 export function groupByTopic(entries: VivaEntry[]): Map<string, VivaEntry[]> {
   const map = new Map<string, VivaEntry[]>();
   for (const e of entries) {
