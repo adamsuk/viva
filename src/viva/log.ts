@@ -18,7 +18,7 @@ export interface VivaEntry {
   schemaVersion: string;
 }
 
-export type GradeKind = "understood" | "partial" | "missed" | "other";
+export type GradeKind = "understood" | "partial" | "missed" | "disputed" | "other";
 
 export interface TopicSummary {
   topic: string;
@@ -87,6 +87,8 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
 export function gradeKind(grade: string): GradeKind {
   const g = grade.trim().toLowerCase();
   if (g === "understood" || g === "ok" || g === "pass") return "understood";
+  // A question the user disputed and the agent agreed was faulty says nothing about them.
+  if (g === "disputed") return "disputed";
   if (/\b(?:not|never|no longer|\w+n['’]t)[\s-]+(?:\w+[\s-]+)*understood\b/.test(g))
     return "missed";
   if (g.includes("partial") || g.includes("some")) return "partial";
@@ -120,11 +122,13 @@ export function summariseTopics(entries: VivaEntry[]): TopicSummary[] {
   return Array.from(groupByTopic(entries).entries())
     .map(([, list]) => {
       const last = list[list.length - 1];
+      // Disputed checks are about the question, not the person: leave them out of the signals.
+      const counted = list.filter((e) => gradeKind(e.grade) !== "disputed");
       const topic = last.topic.trim().replace(/\s+/g, " ");
-      const highConfidenceMiss = list.some(
+      const highConfidenceMiss = counted.some(
         (e) => isHighConfidence(e.confidence) && gradeKind(e.grade) === "missed",
       );
-      const recent = list.slice(-3);
+      const recent = counted.slice(-3);
       const thin =
         highConfidenceMiss || recent.filter((e) => gradeKind(e.grade) !== "understood").length >= 2;
       return {
