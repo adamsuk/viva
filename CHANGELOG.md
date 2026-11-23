@@ -12,6 +12,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ### Changed
 
+- The personal map keeps your log in this browser. New pastes and files add to what is kept, with identical lines kept once, or replace it if you choose. Download log saves a copy and Forget this log deletes it. The page says what is kept, where and until when, and still works for the visit when the browser blocks storage. The sample is shown but never kept. Why: both viva skills tell users without a filesystem that the map stores the log in the browser, but it forgot everything on reload, so no picture could build up over time. The research says to say what is collected and for how long before collecting it ([adamsuk/software-factory#458](https://github.com/adamsuk/software-factory/issues/458), [#3](https://github.com/adamsuk/viva/pull/3)).
 - CI: every action in `pages.yml` is pinned by commit SHA, the build job is read-only (`contents: read`, `pages: read`) and only the deploy job, which never runs on pull requests, gets `pages: write` and `id-token: write`. `upload-pages-artifact` moves from v3 to v5.0.0 and `checkout` to v7.0.1, the versions Line already deploys with. The test workflow now runs on every pull request, not only those into `main`, so stacked pull requests are tested too. Why: the factory's shared rules pin actions by full SHA, and pull-request builds had no need for write tokens ([adamsuk/software-factory#469](https://github.com/adamsuk/software-factory/issues/469), [#10](https://github.com/adamsuk/viva/pull/10)).
 
 ## 2026-11-21
