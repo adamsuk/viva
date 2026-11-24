@@ -439,4 +439,5 @@ test("the sample shows every section of the map", () => {
   assert.ok(byAiUse(entries).some((r) => r.aiUse !== "unknown"), "how the change was made");
   assert.deepEqual(botClaims(entries), { held: 1, partly: 0, wrong: 1, total: 2 });
   assert.ok(calibration(entries).some((r) => r.total > 0));
+  assert.ok(entries.some((e) => e.scope === "review"), "a review-scope check");
 });
