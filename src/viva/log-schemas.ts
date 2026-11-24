@@ -29,6 +29,11 @@ export const AI_USE_VALUES = [
 
 export type AiUse = (typeof AI_USE_VALUES)[number];
 
+/** For a review-comment check: whether the bot's claim held when the agent verified it. */
+export const BOT_CLAIM_VALUES = ["held", "partly", "wrong", "n/a"] as const;
+
+export type BotClaim = (typeof BOT_CLAIM_VALUES)[number];
+
 const FIELDS_0_3: LogField[] = [
   { name: "timestamp", description: "YYYY-MM-DD HH:MM", example: "2026-11-20 17:25" },
   { name: "skillVersion", description: "Skill version that wrote the line", example: "0.3.1" },
@@ -50,6 +55,15 @@ const FIELDS_0_3: LogField[] = [
   { name: "live", description: "live | partly-live | hazard", example: "live" },
 ];
 
+const FIELDS_0_4: LogField[] = [
+  ...FIELDS_0_3,
+  {
+    name: "aiUse",
+    description: `How the change was made: ${AI_USE_VALUES.join(" | ")}`,
+    example: "generated-then-understood",
+  },
+];
+
 export const LOG_SCHEMAS: LogSchema[] = [
   {
     version: "0.3.1",
@@ -64,16 +78,26 @@ export const LOG_SCHEMAS: LogSchema[] = [
     skillVersions: "0.4.x",
     description: "Viva skill log line (skill 0.4.x): the 0.3 fields plus how the change was made",
     delimiter: " | ",
+    fields: FIELDS_0_4,
+    notes:
+      "One line per check. Version is always the second field so the parser can dispatch. aiUse: hand (written without AI), explained (AI used to ask why or about concepts), generated-then-understood (AI wrote it, then the author made sure they could rewrite it), delegated (AI wrote it from a short ask and it was accepted), agent (an agent built it from a work order), unknown.",
+  },
+  {
+    version: "0.5.0",
+    skillVersions: "0.5.x",
+    description:
+      "Viva skill log line (skill 0.5.x): the 0.4 fields plus whether a checked bot comment's claim held",
+    delimiter: " | ",
     fields: [
-      ...FIELDS_0_3,
+      ...FIELDS_0_4,
       {
-        name: "aiUse",
-        description: `How the change was made: ${AI_USE_VALUES.join(" | ")}`,
-        example: "generated-then-understood",
+        name: "botClaim",
+        description: `For scope review-comment, whether the bot's claim held: ${BOT_CLAIM_VALUES.join(" | ")}`,
+        example: "n/a",
       },
     ],
     notes:
-      "One line per check. Version is always the second field so the parser can dispatch. aiUse: hand (written without AI), explained (AI used to ask why or about concepts), generated-then-understood (AI wrote it, then the author made sure they could rewrite it), delegated (AI wrote it from a short ask and it was accepted), agent (an agent built it from a work order), unknown.",
+      "One line per check. Version is always the second field so the parser can dispatch. botClaim: held (the claim was right), partly, wrong (the claim did not hold), n/a (not a review-comment check). aiUse as in 0.4.0.",
   },
 ];
 
