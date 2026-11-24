@@ -507,9 +507,10 @@ export function habitFor(topics: TopicSummary[]): NextStep | null {
 export const LOG_STORAGE_KEY = "viva:personal-map:log";
 
 /**
- * Merge new log text into what is already kept. Blank and comment lines are dropped, identical
- * lines (after trimming) are kept once, and the existing order comes first. Unparseable lines are
- * kept so a newer skill's lines survive until the platform learns their schema.
+ * Merge new log text into what is already kept. Blank and comment lines are dropped, lines are
+ * trimmed, and the existing order comes first. An incoming line is added only as many times as it
+ * appears beyond the existing copies, so re-pasting adds nothing but a reverting correction stays.
+ * Unparseable lines are kept so a newer skill's lines survive until the platform learns their schema.
  */
 export function mergeLogs(existing: string, incoming: string): string {
   // A multiset merge: keep every existing line, and add an incoming line only when the paste holds
