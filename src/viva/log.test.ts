@@ -22,10 +22,11 @@ import {
 
 test("parses the skill log format", () => {
   const entries = parseVivaLog(SAMPLE_LOG);
-  assert.equal(entries.length, 4);
-  assert.equal(entries[1].topic, "idempotency key");
-  assert.equal(entries[1].confidence, 5);
-  assert.equal(entries[1].grade, "missed");
+  assert.equal(entries.length, 10);
+  const miss = entries.find((e) => e.timestamp === "2026-11-19 09:10");
+  assert.equal(miss?.topic, "idempotency key");
+  assert.equal(miss?.confidence, 5);
+  assert.equal(miss?.grade, "missed");
 });
 
 test("flags confident-wrong and suggests next steps", () => {
@@ -428,4 +429,14 @@ test("summaryMarkdown never shows a timestamp that isn't a date, and skips empty
   const md2 = summaryMarkdown(parseVivaLog(undated));
   assert.match(md2, /^Viva summary: 1 check across 1 topic\./);
   assert.ok(!md2.includes("| Confidence |"), md2);
+});
+
+test("the sample shows every section of the map", () => {
+  const { entries, skipped, unknownVersion } = parseVivaLogDetailed(SAMPLE_LOG);
+  assert.equal(skipped, 0);
+  assert.equal(unknownVersion, 0);
+  assert.ok(byWeek(entries).length >= 2, "Over time needs two weeks");
+  assert.ok(byAiUse(entries).some((r) => r.aiUse !== "unknown"), "how the change was made");
+  assert.deepEqual(botClaims(entries), { held: 1, partly: 0, wrong: 1, total: 2 });
+  assert.ok(calibration(entries).some((r) => r.total > 0));
 });
