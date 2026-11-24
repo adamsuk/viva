@@ -28,7 +28,7 @@ export const SKILLS: SkillInfo[] = [
       },
       {
         name: "Check a bot review comment",
-        text: "Point it at a CodeRabbit or other bot comment before you forward or act on it. It checks the claim against the code, then asks whether you could defend or refute it.",
+        text: "Point it at a CodeRabbit or other bot comment before you forward or act on it. It checks the claim against the code, then asks whether you could defend or refute it. Whether the claim held is logged, so the map can show how often the bot was right.",
       },
       {
         name: "Before you approve",
@@ -57,6 +57,10 @@ export const SKILLS: SkillInfo[] = [
       {
         name: "Confidence and drift",
         text: "Says whether your sure answers were understood more often than unsure ones, and flags it when your latest checks slipped against earlier ones.",
+      },
+      {
+        name: "How the bots fared",
+        text: "When the log records it, says how many of the bot comments you checked held, partly held, or were wrong.",
       },
       {
         name: "Grades by how the change was made",
