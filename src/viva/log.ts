@@ -302,16 +302,20 @@ export function driftNote(entries: VivaEntry[]): string | null {
   if (dated.length < DRIFT_MIN_CHECKS) return null;
   const recent = dated.slice(-DRIFT_RECENT);
   const earlier = dated.slice(0, -DRIFT_RECENT);
-  const rate = (l: VivaEntry[], f: (e: VivaEntry) => boolean) => l.filter(f).length / l.length;
+  const count = (l: VivaEntry[], f: (e: VivaEntry) => boolean) => l.filter(f).length;
+  // Compare rates by cross-multiplying whole counts, so an exact 20-point change (3/5 to 2/5)
+  // is not lost to floating-point error.
+  // True when hi/hiOf - lo/loOf >= DRIFT_POINTS%.
+  const aheadBy = (hi: number, hiOf: number, lo: number, loOf: number) =>
+    100 * (hi * loOf - lo * hiOf) >= DRIFT_POINTS * hiOf * loOf;
   const understood = (e: VivaEntry) => gradeKind(e.grade) === "understood";
   const handedOff = (e: VivaEntry) => e.aiUse === "delegated" || e.aiUse === "agent";
-  const threshold = DRIFT_POINTS / 100;
-  const [uNow, uBefore] = [rate(recent, understood), rate(earlier, understood)];
-  if (uBefore - uNow >= threshold)
-    return `Your last ${DRIFT_RECENT} checks were understood ${pct(uNow)}% of the time, against ${pct(uBefore)}% before. A small sample, but worth slowing down on the next change.`;
-  const [hNow, hBefore] = [rate(recent, handedOff), rate(earlier, handedOff)];
-  if (hNow - hBefore >= threshold)
-    return `${pct(hNow)}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${pct(hBefore)}% before. Asking the agent why keeps the understanding with you.`;
+  const [uNow, uBefore] = [count(recent, understood), count(earlier, understood)];
+  if (aheadBy(uBefore, earlier.length, uNow, recent.length))
+    return `Your last ${DRIFT_RECENT} checks were understood ${pct(uNow / recent.length)}% of the time, against ${pct(uBefore / earlier.length)}% before. A small sample, but worth slowing down on the next change.`;
+  const [hNow, hBefore] = [count(recent, handedOff), count(earlier, handedOff)];
+  if (aheadBy(hNow, recent.length, hBefore, earlier.length))
+    return `${pct(hNow / recent.length)}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${pct(hBefore / earlier.length)}% before. Asking the agent why keeps the understanding with you.`;
   return null;
 }
 

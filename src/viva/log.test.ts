@@ -314,3 +314,16 @@ test("driftNote leaves out impossible dates, as byWeek does", () => {
   const nine = Array.from({ length: 9 }, (_, i) => line(`2026-02-${20 + i}`, "understood")).join("\n");
   assert.equal(driftNote(parseVivaLog(`${nine}\n${line("2026-02-30", "missed")}`)), null);
 });
+
+test("driftNote fires on an exact 20-point change that floating point would miss", () => {
+  // 3 of 5 earlier understood, 2 of 5 recent: 0.6 - 0.4 is 0.19999999999999996 in floating point.
+  assert.match(
+    driftNote(parseVivaLog(seq(10, (i) => (i < 3 || (i >= 5 && i < 7) ? "understood" : "missed")))) ?? "",
+    /understood 40% of the time, against 60% before/,
+  );
+  // 4 of 5 earlier delegated, 5 of 5 recent: 1.0 - 0.8 is 0.19999999999999996 too.
+  assert.match(
+    driftNote(parseVivaLog(seq(10, () => "understood", (i) => (i === 4 ? "hand" : "delegated")))) ?? "",
+    /100% of your last 5 changes were delegated or built by an agent, against 80% before/,
+  );
+});

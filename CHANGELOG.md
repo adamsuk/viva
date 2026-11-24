@@ -13,6 +13,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 ### Changed
 
 - The Skills page lists what the skills gained today: a question before you approve someone else's PR, re-checks of a topic missed a week or more ago (`viva` 0.4.3–0.4.4), and confidence and drift in `viva-assess` 0.2.2. The log schema's `scope` description now includes `review`; the fields are unchanged. Why: the Skills page is where people find out what the skills do, and the schema is the contract the skill reads ([adamsuk/software-factory#489](https://github.com/adamsuk/software-factory/issues/489), [#13](https://github.com/adamsuk/viva/pull/13)).
+- The personal map's drift note compares whole counts, not floating-point rates, so an exact 20-point change (3 of 5 understood falling to 2 of 5) now shows the note as intended. Why: CodeRabbit found it just after #12 merged ([adamsuk/software-factory#488](https://github.com/adamsuk/software-factory/issues/488), [#16](https://github.com/adamsuk/viva/pull/16)).
 
 ## 2026-11-23
 
