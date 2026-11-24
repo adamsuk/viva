@@ -64,6 +64,15 @@ const FIELDS_0_4: LogField[] = [
   },
 ];
 
+const FIELDS_0_5: LogField[] = [
+  ...FIELDS_0_4,
+  {
+    name: "botClaim",
+    description: `For scope review-comment, whether the bot's claim held: ${BOT_CLAIM_VALUES.join(" | ")}`,
+    example: "n/a",
+  },
+];
+
 export const LOG_SCHEMAS: LogSchema[] = [
   {
     version: "0.3.1",
@@ -88,16 +97,27 @@ export const LOG_SCHEMAS: LogSchema[] = [
     description:
       "Viva skill log line (skill 0.5.x): the 0.4 fields plus whether a checked bot comment's claim held",
     delimiter: " | ",
+    fields: FIELDS_0_5,
+    notes:
+      "One line per check. Version is always the second field so the parser can dispatch. botClaim: held (the claim was right), partly, wrong (the claim did not hold), n/a (not a review-comment check). aiUse as in 0.4.0. Lines are never rewritten: to correct a check (a dispute that stands, a changed verdict), append it again with every field copied except the skill version and the corrected grade or botClaim; the last line for a timestamp, repo, branchOrPr, commitOrRef, topic and scope wins.",
+  },
+  {
+    version: "0.6.0",
+    skillVersions: "0.6.x",
+    description:
+      "Viva skill log line (skill 0.6.x): the 0.5 fields plus which bot made a checked review comment",
+    delimiter: " | ",
     fields: [
-      ...FIELDS_0_4,
+      ...FIELDS_0_5,
       {
-        name: "botClaim",
-        description: `For scope review-comment, whether the bot's claim held: ${BOT_CLAIM_VALUES.join(" | ")}`,
+        name: "bot",
+        description:
+          "For scope review-comment, the bot that made the comment: a short lowercase name such as coderabbit or copilot; n/a otherwise",
         example: "n/a",
       },
     ],
     notes:
-      "One line per check. Version is always the second field so the parser can dispatch. botClaim: held (the claim was right), partly, wrong (the claim did not hold), n/a (not a review-comment check). aiUse as in 0.4.0. Lines are never rewritten: to correct a check (a dispute that stands, a changed verdict), append it again with every field copied except the skill version and the corrected grade or botClaim; the last line for a timestamp, repo, branchOrPr, commitOrRef, topic and scope wins.",
+      "One line per check. Version is always the second field so the parser can dispatch. bot: short lowercase name of the bot whose comment was checked (letters, digits, hyphens), for scope review-comment; n/a otherwise. botClaim and aiUse as in 0.5.0. Lines are never rewritten: to correct a check, append it again in the current format with every field copied except the skill version and the corrected grade or botClaim, filling fields the older line lacks with their defaults (aiUse unknown, botClaim n/a, bot unknown for review-comment or n/a); the last line for a timestamp, repo, branchOrPr, commitOrRef, topic and scope wins.",
   },
 ];
 
