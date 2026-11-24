@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-24
+
+### Added
+
+- An Over time section on the personal map: checks and understood per week for the latest 8 weeks with checks. With 10 or more checks, one drift note appears when the latest 5 were understood 20 points less often than the earlier ones, or were delegated or agent-built 20 points more often. It is worded as a small-sample nudge, and disputed checks are left out. Why: the map is meant to be a private, longitudinal view, the open ground in the prior-art scan, but it showed no time dimension, and `watch-habituation` warns that scrutiny thins quietly ([adamsuk/software-factory#488](https://github.com/adamsuk/software-factory/issues/488), [#12](https://github.com/adamsuk/viva/pull/12)).
+
 ## 2026-11-23
 
 ### Added
