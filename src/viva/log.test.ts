@@ -2,6 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   byAiUse,
+  byWeek,
+  driftNote,
+  weekOf,
   calibration,
   calibrationSentence,
   confidenceBucket,
@@ -221,4 +224,67 @@ test("a missed topic is due a re-check after seven days, not before", () => {
     true,
   );
   assert.equal(summariseTopics(parseVivaLog(missed))[0].recheck, false);
+});
+
+const line = (date: string, grade: string, aiUse = "hand", conf = 4) =>
+  `${date} 10:00 | 0.4.3 | o/r | pr-1 | abc | t | ${conf} | ${grade} | session | live | ${aiUse}`;
+
+test("weekOf gives the Monday of the week, and null for unreadable dates", () => {
+  assert.equal(weekOf("2026-11-23 09:00"), "2026-11-23"); // a Monday
+  assert.equal(weekOf("2026-11-29 23:59"), "2026-11-23"); // the Sunday after
+  assert.equal(weekOf("2026-11-30 00:00"), "2026-11-30");
+  assert.equal(weekOf("2027-01-01 12:00"), "2026-12-28"); // across a year boundary
+  assert.equal(weekOf("yesterday"), null);
+  assert.equal(weekOf("2026-02-30 10:00"), null);
+});
+
+test("byWeek counts checks and understood per week, leaving out disputed and unreadable dates", () => {
+  const log = [
+    line("2026-11-17", "understood"),
+    line("2026-11-23", "missed"),
+    line("2026-11-24", "understood"),
+    line("2026-11-25", "disputed"),
+    "someday 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+  ].join("\n");
+  assert.deepEqual(byWeek(parseVivaLog(log)), [
+    { week: "2026-11-16", checks: 1, understood: 1 },
+    { week: "2026-11-23", checks: 2, understood: 1 },
+  ]);
+});
+
+test("byWeek keeps only the latest weeks", () => {
+  const log = Array.from({ length: 10 }, (_, i) =>
+    line(`2026-0${Math.floor(i / 4) + 1}-${String((i % 4) * 7 + 1).padStart(2, "0")}`, "understood"),
+  ).join("\n");
+  const rows = byWeek(parseVivaLog(log), 3);
+  assert.equal(rows.length, 3);
+  assert.ok(rows[0].week < rows[2].week);
+});
+
+const days = (n: number, grade: (i: number) => string, aiUse: (i: number) => string = () => "hand") =>
+  Array.from({ length: n }, (_, i) =>
+    line(`2026-10-${String(i + 1).padStart(2, "0")}`, grade(i), aiUse(i)),
+  ).join("\n");
+
+test("driftNote stays quiet below ten checks and when nothing moved", () => {
+  assert.equal(driftNote(parseVivaLog(days(9, (i) => (i < 4 ? "understood" : "missed")))), null);
+  assert.equal(driftNote(parseVivaLog(days(12, () => "understood"))), null);
+});
+
+test("driftNote flags a drop in understood across the latest five", () => {
+  const note = driftNote(parseVivaLog(days(12, (i) => (i < 7 ? "understood" : i < 9 ? "missed" : "understood"))));
+  assert.match(note ?? "", /understood 60% of the time, against 100% before/);
+});
+
+test("driftNote flags a rise in delegated or agent-built changes", () => {
+  const note = driftNote(
+    parseVivaLog(days(12, () => "understood", (i) => (i < 7 ? "hand" : i % 2 ? "agent" : "delegated"))),
+  );
+  assert.match(note ?? "", /100% of your last 5 changes were delegated or built by an agent, against 0% before/);
+});
+
+test("driftNote orders by time, not by line, and ignores disputed checks", () => {
+  const lines = days(12, (i) => (i < 7 ? "understood" : "missed")).split("\n").reverse();
+  lines.push(line("2026-10-30", "disputed"));
+  assert.match(driftNote(parseVivaLog(lines.join("\n"))) ?? "", /understood 0% of the time/);
 });
