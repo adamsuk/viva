@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   botClaims,
   byAiUse,
+  byWeek,
+  driftNote,
+  weekOf,
   calibration,
   calibrationSentence,
   confidenceBucket,
@@ -13,6 +16,7 @@ import {
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
+  summaryMarkdown,
   SAMPLE_LOG,
 } from "./log.ts";
 
@@ -237,12 +241,191 @@ test("schema 0.5.0 reads botClaim; older lines and other values read as n/a", as
     "2026-11-21 14:00 | 0.5.0 | r | pr-1 | a | odd claim | 4 | understood | review-comment | live | unknown | maybe",
     "2026-11-21 15:00 | 0.5.0 | r | pr-1 | a | bad question | 4 | disputed | review-comment | live | unknown | wrong",
     "2026-11-21 16:00 | 0.4.2 | r | pr-1 | a | old claim | 4 | understood | review-comment | live | unknown",
+    "2026-11-21 17:00 | 0.5.0 | r | pr-1 | a | stray verdict | 4 | understood | session | live | hand | wrong",
   ].join("\n");
   const entries = parseVivaLog(log);
   assert.deepEqual(
     entries.map((e) => e.botClaim),
-    ["wrong", "held", "partly", "n/a", "n/a", "wrong", "n/a"],
+    ["wrong", "held", "partly", "n/a", "n/a", "wrong", "n/a", "n/a"],
   );
   assert.deepEqual(botClaims(entries), { held: 1, partly: 1, wrong: 1, total: 3 });
   assert.deepEqual(botClaims([]), { held: 0, partly: 0, wrong: 0, total: 0 });
+});
+
+test("summaryMarkdown gives counts only, leaving out disputed checks", () => {
+  const log = [
+    "2026-11-02 10:00 | 0.4.3 | secret/repo | pr-9 | abc | Webhook retry | 5 | understood | session | live | hand",
+    "2026-11-01 10:00 | 0.4.3 | secret/repo | pr-9 | abc | webhook  retry | 2 | missed | session | live | delegated",
+    "2026-11-03 10:00 | 0.4.3 | secret/repo | pr-9 | abc | cache key | 3 | partial | session | live | agent",
+    "2026-11-04 10:00 | 0.4.3 | secret/repo | pr-9 | abc | cache key | 5 | disputed | session | live | hand",
+  ].join("\n");
+  const md = summaryMarkdown(parseVivaLog(log));
+  assert.match(md, /2026-11-01 to 2026-11-03: 3 checks across 2 topics\./);
+  assert.match(md, /Understood 1, partial 1, missed 1; 1 disputed, left out\./);
+  assert.match(md, /\| high \| 1 \| 0 \| 0 \|/);
+  assert.match(md, /\| low \| 0 \| 0 \| 1 \|/);
+  assert.match(md, /\| delegated \| 0 \| 0 \| 1 \|/);
+  for (const secret of ["secret/repo", "pr-9", "abc", "ebhook", "cache key"])
+    assert.ok(!md.includes(secret), `leaked ${secret}`);
+});
+
+test("summaryMarkdown handles an empty log and logs with no ai-use", () => {
+  assert.equal(summaryMarkdown([]), "No counted checks yet.");
+  const old = "2026-11-01 10:00 | 0.3.3 | o/r | pr-1 | abc | t | 4 | understood | session | live";
+  const md = summaryMarkdown(parseVivaLog(old));
+  assert.match(md, /: 1 check across 1 topic\./);
+  assert.ok(!md.includes("How the change was made"));
+});
+
+const line = (date: string, grade: string, aiUse = "hand", conf = 4) =>
+  `${date} 10:00 | 0.4.3 | o/r | pr-1 | abc | t | ${conf} | ${grade} | session | live | ${aiUse}`;
+
+test("weekOf gives the Monday of the week, and null for unreadable dates", () => {
+  assert.equal(weekOf("2026-11-23 09:00"), "2026-11-23"); // a Monday
+  assert.equal(weekOf("2026-11-29 23:59"), "2026-11-23"); // the Sunday after
+  assert.equal(weekOf("2026-11-30 00:00"), "2026-11-30");
+  assert.equal(weekOf("2027-01-01 12:00"), "2026-12-28"); // across a year boundary
+  assert.equal(weekOf("yesterday"), null);
+  assert.equal(weekOf("2026-02-30 10:00"), null);
+});
+
+test("byWeek counts checks and understood per week, leaving out disputed and unreadable dates", () => {
+  const log = [
+    line("2026-11-17", "understood"),
+    line("2026-11-23", "missed"),
+    line("2026-11-24", "understood"),
+    line("2026-11-25", "disputed"),
+    "someday 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+  ].join("\n");
+  assert.deepEqual(byWeek(parseVivaLog(log)), [
+    { week: "2026-11-16", checks: 1, understood: 1 },
+    { week: "2026-11-23", checks: 2, understood: 1 },
+  ]);
+});
+
+test("byWeek keeps only the latest weeks", () => {
+  const log = Array.from({ length: 10 }, (_, i) =>
+    line(
+      `2026-0${Math.floor(i / 4) + 1}-${String((i % 4) * 7 + 1).padStart(2, "0")}`,
+      "understood",
+    ),
+  ).join("\n");
+  const rows = byWeek(parseVivaLog(log), 3);
+  assert.equal(rows.length, 3);
+  assert.ok(rows[0].week < rows[2].week);
+});
+
+const days = (
+  n: number,
+  grade: (i: number) => string,
+  aiUse: (i: number) => string = () => "hand",
+) =>
+  Array.from({ length: n }, (_, i) =>
+    line(`2026-10-${String(i + 1).padStart(2, "0")}`, grade(i), aiUse(i)),
+  ).join("\n");
+
+test("driftNote stays quiet below ten checks and when nothing moved", () => {
+  assert.equal(driftNote(parseVivaLog(days(9, (i) => (i < 4 ? "understood" : "missed")))), null);
+  assert.equal(driftNote(parseVivaLog(days(12, () => "understood"))), null);
+});
+
+test("driftNote flags a drop in understood across the latest five", () => {
+  const note = driftNote(
+    parseVivaLog(days(12, (i) => (i < 7 ? "understood" : i < 9 ? "missed" : "understood"))),
+  );
+  assert.match(note ?? "", /understood 60% of the time, against 100% before/);
+});
+
+test("driftNote flags a rise in delegated or agent-built changes", () => {
+  const note = driftNote(
+    parseVivaLog(
+      days(
+        12,
+        () => "understood",
+        (i) => (i < 7 ? "hand" : i % 2 ? "agent" : "delegated"),
+      ),
+    ),
+  );
+  assert.match(
+    note ?? "",
+    /100% of your last 5 changes were delegated or built by an agent, against 0% before/,
+  );
+});
+
+test("driftNote orders by time, not by line, and ignores disputed checks", () => {
+  const lines = days(12, (i) => (i < 7 ? "understood" : "missed"))
+    .split("\n")
+    .reverse();
+  lines.push(line("2026-10-30", "disputed"));
+  assert.match(driftNote(parseVivaLog(lines.join("\n"))) ?? "", /understood 0% of the time/);
+});
+
+const seq = (
+  n: number,
+  grade: (i: number) => string,
+  aiUse: (i: number) => string = () => "hand",
+) =>
+  Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10);
+    return line(d, grade(i), aiUse(i));
+  }).join("\n");
+
+test("driftNote compares unrounded rates: just under 20 points is quiet, exactly 20 fires", () => {
+  // 8 of 41 earlier understood (19.5%), none of the latest 5: a 19.5-point drop.
+  assert.equal(driftNote(parseVivaLog(seq(46, (i) => (i < 8 ? "understood" : "missed")))), null);
+  // 33 of 41 earlier delegated (80.5%), all 5 recent: a 19.5-point rise.
+  assert.equal(
+    driftNote(
+      parseVivaLog(
+        seq(
+          46,
+          () => "understood",
+          (i) => (i < 33 || i >= 41 ? "delegated" : "hand"),
+        ),
+      ),
+    ),
+    null,
+  );
+  // 2 of 5 earlier understood (40%), 1 of 5 recent (20%): exactly 20 points.
+  assert.match(
+    driftNote(parseVivaLog(seq(10, (i) => (i < 2 || i === 5 ? "understood" : "missed")))) ?? "",
+    /understood 20% of the time, against 40% before/,
+  );
+});
+
+test("driftNote leaves out impossible dates, as byWeek does", () => {
+  const nine = Array.from({ length: 9 }, (_, i) => line(`2026-02-${20 + i}`, "understood")).join(
+    "\n",
+  );
+  assert.equal(driftNote(parseVivaLog(`${nine}\n${line("2026-02-30", "missed")}`)), null);
+});
+
+test("driftNote fires on an exact 20-point change that floating point would miss", () => {
+  // 3 of 5 earlier understood, 2 of 5 recent: 0.6 - 0.4 is 0.19999999999999996 in floating point.
+  assert.match(
+    driftNote(parseVivaLog(seq(10, (i) => (i < 3 || (i >= 5 && i < 7) ? "understood" : "missed")))) ?? "",
+    /understood 40% of the time, against 60% before/,
+  );
+  // 4 of 5 earlier delegated, 5 of 5 recent: 1.0 - 0.8 is 0.19999999999999996 too.
+  assert.match(
+    driftNote(parseVivaLog(seq(10, () => "understood", (i) => (i === 4 ? "hand" : "delegated")))) ?? "",
+    /100% of your last 5 changes were delegated or built by an agent, against 80% before/,
+  );
+});
+
+test("summaryMarkdown never shows a timestamp that isn't a date, and skips empty tables", () => {
+  const log = [
+    "2026-11-02 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+    "acme-payments-secret 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+    "2026-02-30 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+  ].join("\n");
+  const md = summaryMarkdown(parseVivaLog(log));
+  assert.ok(!md.includes("acme"), md);
+  assert.ok(!md.includes("2026-02-30"), md);
+  assert.match(md, /^Viva summary, 2026-11-02: 3 checks across 1 topic\./);
+  const undated =
+    "yesterday | 0.4.3 | o/r | pr-1 | abc | t | ? | understood | session | live | unknown";
+  const md2 = summaryMarkdown(parseVivaLog(undated));
+  assert.match(md2, /^Viva summary: 1 check across 1 topic\./);
+  assert.ok(!md2.includes("| Confidence |"), md2);
 });

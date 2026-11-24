@@ -4,8 +4,10 @@ import {
   LOG_STORAGE_KEY,
   botClaims,
   byAiUse,
+  byWeek,
   calibration,
   calibrationSentence,
+  driftNote,
   SAMPLE_LOG,
   gradeKind,
   habitFor,
@@ -13,11 +15,13 @@ import {
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
+  summaryMarkdown,
   type AiUseRow,
   type BotClaimCounts,
   type CalibrationRow,
   type NextStep,
   type TopicSummary,
+  type WeekRow,
 } from "@/viva/log";
 
 type Mode = "add" | "replace";
@@ -49,6 +53,7 @@ export function PersonalMap() {
   const [mode, setMode] = useState<Mode>("add");
   const [error, setError] = useState<string | null>(null);
   const [sample, setSample] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const usedSample = sample !== null;
 
   useEffect(() => {
@@ -63,6 +68,7 @@ export function PersonalMap() {
       return;
     }
     setError(null);
+    setCopied(null);
     if (sample) {
       // The sample is for trying the map. It is shown, never kept.
       setSample(raw);
@@ -85,6 +91,7 @@ export function PersonalMap() {
     setText("");
     setSample(null);
     setError(null);
+    setCopied(null);
     setStorageOk(writeStored(""));
   }
 
@@ -96,6 +103,18 @@ export function PersonalMap() {
     a.download = "viva-log.md";
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function copySummary() {
+    setCopied(null);
+    try {
+      await navigator.clipboard.writeText(summaryMarkdown(entries));
+      setCopied("Copied. Counts only: no repositories, branches or topics.");
+    } catch {
+      setCopied(
+        "This browser blocked the clipboard. Download the log and run viva-assess instead.",
+      );
+    }
   }
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -249,12 +268,24 @@ export function PersonalMap() {
               </button>
               <button
                 type="button"
+                onClick={copySummary}
+                className="min-h-11 rounded-2xl border border-line px-4 text-sm"
+              >
+                Copy summary
+              </button>
+              <button
+                type="button"
                 onClick={forget}
                 className="min-h-11 rounded-2xl border border-margin px-4 text-sm text-margin"
               >
                 Forget this log
               </button>
             </div>
+          )}
+          {!usedSample && copied && (
+            <p role="status" className="mt-2 text-sm text-muted">
+              {copied}
+            </p>
           )}
 
           {thin.length > 0 && (
@@ -292,6 +323,7 @@ export function PersonalMap() {
           <Calibration rows={calibration(entries)} />
           <ByAiUse rows={byAiUse(entries)} />
           <BotComments counts={botClaims(entries)} />
+          <OverTime rows={byWeek(entries)} drift={driftNote(entries)} />
 
           <h3 className="mt-10 font-display text-2xl">Topics</h3>
           <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -458,6 +490,44 @@ function BotComments({ counts }: { counts: BotClaimCounts }) {
         <span className="text-hold">{counts.partly} partly</span>,{" "}
         <span className="text-fail">{counts.wrong} wrong</span>.
       </p>
+    </section>
+  );
+}
+
+function OverTime({ rows, drift }: { rows: WeekRow[]; drift: string | null }) {
+  if (rows.length < 2 && !drift) return null;
+  return (
+    <section aria-labelledby="over-time-heading" className="mt-10">
+      <h3 id="over-time-heading" className="font-display text-2xl">
+        Over time
+      </h3>
+      <p className="mt-1 max-w-2xl text-sm text-muted">
+        Checks per week, and how many you understood. Regular small checks matter more than any one
+        week&apos;s result.
+      </p>
+      {rows.length >= 2 && (
+        <table className="mt-3 w-full max-w-xl text-left text-sm">
+          <thead>
+            <tr className="border-b border-line font-mono text-xs uppercase tracking-wider text-faint">
+              <th className="py-1 pr-2 font-normal">Week of</th>
+              <th className="py-1 pr-2 font-normal">Checks</th>
+              <th className="py-1 pr-2 font-normal">Understood</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.week} className="border-b border-line">
+                <th scope="row" className="py-1 pr-2 font-medium">
+                  {r.week}
+                </th>
+                <td className="py-1 pr-2">{r.checks}</td>
+                <td className="py-1 pr-2 text-pass">{r.understood}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {drift && <p className="mt-2 text-sm">{drift}</p>}
     </section>
   );
 }

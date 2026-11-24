@@ -96,7 +96,9 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
     scope: get("scope"),
     live: get("live"),
     aiUse: readAiUse(get("aiUse")),
-    botClaim: readBotClaim(get("botClaim")),
+    // Only a review-comment check has a bot claim; anything else in that field reads as n/a.
+    botClaim:
+      get("scope").toLowerCase() === "review-comment" ? readBotClaim(get("botClaim")) : "n/a",
     raw: line,
     schemaVersion: schema.version,
   };
@@ -237,6 +239,55 @@ export function calibrationSentence(rows: CalibrationRow[]): string | null {
     : base;
 }
 
+function range(dates: string[]): string {
+  if (!dates.length) return "";
+  const [first, last] = [dates[0], dates[dates.length - 1]];
+  return first === last ? `, ${first}` : `, ${first} to ${last}`;
+}
+
+/**
+ * A short markdown summary of the counted checks, for pasting into an experiment log. Counts only:
+ * no repository, branch, commit or topic names, so it is safe to share.
+ */
+export function summaryMarkdown(entries: VivaEntry[]): string {
+  const counted = entries.filter((e) => {
+    const k = gradeKind(e.grade);
+    return k === "understood" || k === "partial" || k === "missed";
+  });
+  if (!counted.length) return "No counted checks yet.";
+  // Only well-formed dates reach the summary: the timestamp field is free text in a hand-edited log.
+  const dates = counted
+    .map((e) => /^\d{4}-\d{2}-\d{2}/.exec(e.timestamp.trim())?.[0])
+    .filter((d): d is string => d !== undefined && weekOf(d) !== null)
+    .sort();
+  const n = (k: GradeKind) => counted.filter((e) => gradeKind(e.grade) === k).length;
+  const disputed = entries.filter((e) => gradeKind(e.grade) === "disputed").length;
+  const topics = new Set(counted.map((e) => topicKey(e.topic))).size;
+  const lines = [
+    `Viva summary${range(dates)}: ${counted.length} check${counted.length === 1 ? "" : "s"} across ${topics} topic${topics === 1 ? "" : "s"}.`,
+    `Understood ${n("understood")}, partial ${n("partial")}, missed ${n("missed")}${disputed ? `; ${disputed} disputed, left out` : ""}.`,
+  ];
+  const bands = calibration(counted).filter((r) => r.total > 0);
+  if (bands.length) {
+    lines.push(
+      "",
+      "| Confidence | Understood | Partial | Missed |",
+      "|---|---|---|---|",
+      ...bands.map((r) => `| ${r.bucket} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+    );
+  }
+  const aiRows = byAiUse(counted);
+  if (aiRows.some((r) => r.aiUse !== "unknown")) {
+    lines.push(
+      "",
+      "| How the change was made | Understood | Partial | Missed |",
+      "|---|---|---|---|",
+      ...aiRows.map((r) => `| ${r.aiUse} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+    );
+  }
+  return lines.join("\n");
+}
+
 export function groupByTopic(entries: VivaEntry[]): Map<string, VivaEntry[]> {
   const map = new Map<string, VivaEntry[]>();
   for (const e of entries) {
@@ -267,6 +318,85 @@ export function needsRecheck(counted: VivaEntry[], now: Date): boolean {
   const at = checkTime(latest.timestamp);
   if (!Number.isFinite(at)) return false;
   return now.getTime() - at >= RECHECK_AFTER_DAYS * 24 * 60 * 60 * 1000;
+}
+
+export interface WeekRow {
+  /** Monday of the week, YYYY-MM-DD. */
+  week: string;
+  checks: number;
+  understood: number;
+}
+
+/** Monday (YYYY-MM-DD) of the week a log timestamp falls in, or null if its date is unreadable. */
+export function weekOf(timestamp: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(timestamp.trim());
+  if (!m) return null;
+  const day = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  if (day.getUTCMonth() !== Number(m[2]) - 1) return null;
+  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+  return day.toISOString().slice(0, 10);
+}
+
+function counted(entries: VivaEntry[]): VivaEntry[] {
+  return entries.filter((e) => {
+    const k = gradeKind(e.grade);
+    return k === "understood" || k === "partial" || k === "missed";
+  });
+}
+
+/** Checks and understood per week, oldest first, for the latest `limit` weeks that have checks. */
+export function byWeek(entries: VivaEntry[], limit = 8): WeekRow[] {
+  const rows = new Map<string, WeekRow>();
+  for (const e of counted(entries)) {
+    const week = weekOf(e.timestamp);
+    if (!week) continue;
+    const row = rows.get(week) ?? { week, checks: 0, understood: 0 };
+    row.checks++;
+    if (gradeKind(e.grade) === "understood") row.understood++;
+    rows.set(week, row);
+  }
+  return Array.from(rows.values())
+    .sort((a, b) => a.week.localeCompare(b.week))
+    .slice(-limit);
+}
+
+export const DRIFT_MIN_CHECKS = 10;
+export const DRIFT_RECENT = 5;
+const DRIFT_POINTS = 20;
+
+const pct = (rate: number) => Math.round(100 * rate);
+
+/**
+ * One note when the latest DRIFT_RECENT counted checks moved the wrong way against the earlier
+ * ones: understood rate down, or delegated/agent share up, by DRIFT_POINTS or more (compared
+ * unrounded; only the message rounds). Null otherwise, and below DRIFT_MIN_CHECKS. Lines with an
+ * impossible date (2026-02-30) are left out, as in byWeek. Five checks is a small sample, so the
+ * note is a nudge.
+ */
+export function driftNote(entries: VivaEntry[]): string | null {
+  const dated = counted(entries)
+    .map((e, i) => ({ e, i, at: checkTime(e.timestamp) }))
+    .filter((x) => Number.isFinite(x.at) && weekOf(x.e.timestamp) !== null)
+    .sort((a, b) => a.at - b.at || a.i - b.i)
+    .map((x) => x.e);
+  if (dated.length < DRIFT_MIN_CHECKS) return null;
+  const recent = dated.slice(-DRIFT_RECENT);
+  const earlier = dated.slice(0, -DRIFT_RECENT);
+  const count = (l: VivaEntry[], f: (e: VivaEntry) => boolean) => l.filter(f).length;
+  // Compare rates by cross-multiplying whole counts, so an exact 20-point change (3/5 to 2/5)
+  // is not lost to floating-point error.
+  // True when hi/hiOf - lo/loOf >= DRIFT_POINTS%.
+  const aheadBy = (hi: number, hiOf: number, lo: number, loOf: number) =>
+    100 * (hi * loOf - lo * hiOf) >= DRIFT_POINTS * hiOf * loOf;
+  const understood = (e: VivaEntry) => gradeKind(e.grade) === "understood";
+  const handedOff = (e: VivaEntry) => e.aiUse === "delegated" || e.aiUse === "agent";
+  const [uNow, uBefore] = [count(recent, understood), count(earlier, understood)];
+  if (aheadBy(uBefore, earlier.length, uNow, recent.length))
+    return `Your last ${DRIFT_RECENT} checks were understood ${pct(uNow / recent.length)}% of the time, against ${pct(uBefore / earlier.length)}% before. A small sample, but worth slowing down on the next change.`;
+  const [hNow, hBefore] = [count(recent, handedOff), count(earlier, handedOff)];
+  if (aheadBy(hNow, recent.length, hBefore, earlier.length))
+    return `${pct(hNow / recent.length)}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${pct(hBefore / earlier.length)}% before. Asking the agent why keeps the understanding with you.`;
+  return null;
 }
 
 export function summariseTopics(entries: VivaEntry[], now?: Date): TopicSummary[] {
