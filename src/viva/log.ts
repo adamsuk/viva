@@ -51,6 +51,8 @@ export interface ParsedLog {
   skipped: number;
   /** Lines whose version matched no schema; read with the oldest schema. */
   unknownVersion: number;
+  /** Earlier lines replaced by a later correction of the same check (for example a dispute). */
+  superseded: number;
 }
 
 export function parseVivaLog(text: string): VivaEntry[] {
@@ -74,8 +76,21 @@ export function parseVivaLogDetailed(text: string): ParsedLog {
     if (!known) unknownVersion++;
     entries.push(entry);
   }
-  entries.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-  return { entries, skipped, unknownVersion };
+  // The skill never rewrites a line. When a dispute stands, or a bot verdict is re-checked, it
+  // appends the same check again with the new grade; the later line wins.
+  const latest = new Map<string, VivaEntry>();
+  for (const e of entries) latest.set(checkKey(e), e);
+  const superseded = entries.length - latest.size;
+  const kept = Array.from(latest.values());
+  kept.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  return { entries: kept, skipped, unknownVersion, superseded };
+}
+
+/** One check: when, where, and on what. A later line with the same key is a correction. */
+function checkKey(e: VivaEntry): string {
+  return [e.timestamp, e.repo, e.branchOrPr, e.commitOrRef, topicKey(e.topic)]
+    .map((f) => f.trim())
+    .join("\u0000");
 }
 
 function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {

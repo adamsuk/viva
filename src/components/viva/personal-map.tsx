@@ -60,7 +60,7 @@ export function PersonalMap() {
     if (typeof window !== "undefined" && !readStored().ok) setStorageOk(false);
   }, []);
 
-  const { entries, skipped, unknownVersion } = parseVivaLogDetailed(sample ?? log);
+  const { entries, skipped, unknownVersion, superseded } = parseVivaLogDetailed(sample ?? log);
 
   function load(raw: string, sample = false) {
     if (!parseVivaLog(raw).length) {
@@ -249,6 +249,11 @@ export function PersonalMap() {
             {disputed ? ` · ${disputed} disputed` : ""}
             {usedSample ? " · sample data" : ""}
           </p>
+          {superseded > 0 && (
+            <p className="mt-2 text-sm text-muted">
+              {`${superseded} check${superseded === 1 ? " was" : "s were"} corrected later in the log (for example a dispute); the map uses the correction.`}
+            </p>
+          )}
           {(skipped > 0 || unknownVersion > 0) && (
             <p className="mt-2 text-sm text-muted">
               {skipped > 0 &&

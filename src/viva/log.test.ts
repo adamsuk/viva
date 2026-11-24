@@ -441,3 +441,25 @@ test("the sample shows every section of the map", () => {
   assert.ok(calibration(entries).some((r) => r.total > 0));
   assert.ok(entries.some((e) => e.scope === "review"), "a review-scope check");
 });
+
+test("a later line for the same check supersedes the earlier one", () => {
+  const log = [
+    "2026-11-21 10:00 | 0.5.0 | r | pr-1 | a | retry | 5 | missed | session | live | hand | n/a",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-2 | b | claim | 4 | understood | review-comment | live | unknown | held",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-1 | a | Retry  | 5 | disputed | session | live | hand | n/a",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-2 | b | claim | 4 | understood | review-comment | live | unknown | wrong",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-3 | c | retry | 3 | partial | session | live | hand | n/a",
+  ].join("\n");
+  const { entries, superseded } = parseVivaLogDetailed(log);
+  assert.equal(superseded, 2);
+  assert.deepEqual(
+    entries.map((e) => [e.branchOrPr, e.grade, e.botClaim]),
+    [
+      ["pr-1", "disputed", "n/a"],
+      ["pr-2", "understood", "wrong"],
+      ["pr-3", "partial", "n/a"],
+    ],
+  );
+  assert.deepEqual(botClaims(entries), { held: 0, partly: 0, wrong: 1, total: 1 });
+  assert.equal(parseVivaLogDetailed(SAMPLE_LOG).superseded, 0);
+});

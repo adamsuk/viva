@@ -97,6 +97,8 @@ YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-t
 
 `grade` can also be `disputed` (the user disputed the question and the agent agreed it was faulty); the map leaves disputed checks out of its signals. `scope` can also be `review-comment` (a check on a bot review comment before forwarding it) or `review` (a check before approving someone else's PR).
 
+Lines are never rewritten. When a dispute stands after the line was written, or a bot comment's verdict is re-checked, the skill appends the same check again (same timestamp, repo, branch-or-pr, commit-or-ref and topic) with the new grade or `bot-claim`. The map keeps the last line for each check and says how many were corrected.
+
 A skill change that alters the line format must add a new schema version here, then bump the skill to a new minor version. Existing versions never change, so old lines keep parsing.
 
 The skill is told to fetch the schema from the platform (or fall back to the known format) before logging.
