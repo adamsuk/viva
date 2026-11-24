@@ -288,3 +288,29 @@ test("driftNote orders by time, not by line, and ignores disputed checks", () =>
   lines.push(line("2026-10-30", "disputed"));
   assert.match(driftNote(parseVivaLog(lines.join("\n"))) ?? "", /understood 0% of the time/);
 });
+
+const seq = (n: number, grade: (i: number) => string, aiUse: (i: number) => string = () => "hand") =>
+  Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10);
+    return line(d, grade(i), aiUse(i));
+  }).join("\n");
+
+test("driftNote compares unrounded rates: just under 20 points is quiet, exactly 20 fires", () => {
+  // 8 of 41 earlier understood (19.5%), none of the latest 5: a 19.5-point drop.
+  assert.equal(driftNote(parseVivaLog(seq(46, (i) => (i < 8 ? "understood" : "missed")))), null);
+  // 33 of 41 earlier delegated (80.5%), all 5 recent: a 19.5-point rise.
+  assert.equal(
+    driftNote(parseVivaLog(seq(46, () => "understood", (i) => (i < 33 || i >= 41 ? "delegated" : "hand")))),
+    null,
+  );
+  // 2 of 5 earlier understood (40%), 1 of 5 recent (20%): exactly 20 points.
+  assert.match(
+    driftNote(parseVivaLog(seq(10, (i) => (i < 2 || i === 5 ? "understood" : "missed")))) ?? "",
+    /understood 20% of the time, against 40% before/,
+  );
+});
+
+test("driftNote leaves out impossible dates, as byWeek does", () => {
+  const nine = Array.from({ length: 9 }, (_, i) => line(`2026-02-${20 + i}`, "understood")).join("\n");
+  assert.equal(driftNote(parseVivaLog(`${nine}\n${line("2026-02-30", "missed")}`)), null);
+});

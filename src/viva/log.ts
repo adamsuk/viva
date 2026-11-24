@@ -284,32 +284,34 @@ export const DRIFT_MIN_CHECKS = 10;
 export const DRIFT_RECENT = 5;
 const DRIFT_POINTS = 20;
 
-const pct = (n: number, d: number) => Math.round((100 * n) / d);
+const pct = (rate: number) => Math.round(100 * rate);
 
 /**
  * One note when the latest DRIFT_RECENT counted checks moved the wrong way against the earlier
- * ones: understood rate down, or delegated/agent share up, by DRIFT_POINTS or more. Null
- * otherwise, and below DRIFT_MIN_CHECKS. Five checks is a small sample, so the note is a nudge.
+ * ones: understood rate down, or delegated/agent share up, by DRIFT_POINTS or more (compared
+ * unrounded; only the message rounds). Null otherwise, and below DRIFT_MIN_CHECKS. Lines with an
+ * impossible date (2026-02-30) are left out, as in byWeek. Five checks is a small sample, so the
+ * note is a nudge.
  */
 export function driftNote(entries: VivaEntry[]): string | null {
   const dated = counted(entries)
     .map((e, i) => ({ e, i, at: checkTime(e.timestamp) }))
-    .filter((x) => Number.isFinite(x.at))
+    .filter((x) => Number.isFinite(x.at) && weekOf(x.e.timestamp) !== null)
     .sort((a, b) => a.at - b.at || a.i - b.i)
     .map((x) => x.e);
   if (dated.length < DRIFT_MIN_CHECKS) return null;
   const recent = dated.slice(-DRIFT_RECENT);
   const earlier = dated.slice(0, -DRIFT_RECENT);
-  const understood = (l: VivaEntry[]) =>
-    pct(l.filter((e) => gradeKind(e.grade) === "understood").length, l.length);
-  const handedOff = (l: VivaEntry[]) =>
-    pct(l.filter((e) => e.aiUse === "delegated" || e.aiUse === "agent").length, l.length);
-  const [uNow, uBefore] = [understood(recent), understood(earlier)];
-  if (uBefore - uNow >= DRIFT_POINTS)
-    return `Your last ${DRIFT_RECENT} checks were understood ${uNow}% of the time, against ${uBefore}% before. A small sample, but worth slowing down on the next change.`;
-  const [hNow, hBefore] = [handedOff(recent), handedOff(earlier)];
-  if (hNow - hBefore >= DRIFT_POINTS)
-    return `${hNow}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${hBefore}% before. Asking the agent why keeps the understanding with you.`;
+  const rate = (l: VivaEntry[], f: (e: VivaEntry) => boolean) => l.filter(f).length / l.length;
+  const understood = (e: VivaEntry) => gradeKind(e.grade) === "understood";
+  const handedOff = (e: VivaEntry) => e.aiUse === "delegated" || e.aiUse === "agent";
+  const threshold = DRIFT_POINTS / 100;
+  const [uNow, uBefore] = [rate(recent, understood), rate(earlier, understood)];
+  if (uBefore - uNow >= threshold)
+    return `Your last ${DRIFT_RECENT} checks were understood ${pct(uNow)}% of the time, against ${pct(uBefore)}% before. A small sample, but worth slowing down on the next change.`;
+  const [hNow, hBefore] = [rate(recent, handedOff), rate(earlier, handedOff)];
+  if (hNow - hBefore >= threshold)
+    return `${pct(hNow)}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${pct(hBefore)}% before. Asking the agent why keeps the understanding with you.`;
   return null;
 }
 
