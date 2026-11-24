@@ -240,6 +240,81 @@ export function needsRecheck(counted: VivaEntry[], now: Date): boolean {
   return now.getTime() - at >= RECHECK_AFTER_DAYS * 24 * 60 * 60 * 1000;
 }
 
+export interface WeekRow {
+  /** Monday of the week, YYYY-MM-DD. */
+  week: string;
+  checks: number;
+  understood: number;
+}
+
+/** Monday (YYYY-MM-DD) of the week a log timestamp falls in, or null if its date is unreadable. */
+export function weekOf(timestamp: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(timestamp.trim());
+  if (!m) return null;
+  const day = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  if (day.getUTCMonth() !== Number(m[2]) - 1) return null;
+  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+  return day.toISOString().slice(0, 10);
+}
+
+function counted(entries: VivaEntry[]): VivaEntry[] {
+  return entries.filter((e) => {
+    const k = gradeKind(e.grade);
+    return k === "understood" || k === "partial" || k === "missed";
+  });
+}
+
+/** Checks and understood per week, oldest first, for the latest `limit` weeks that have checks. */
+export function byWeek(entries: VivaEntry[], limit = 8): WeekRow[] {
+  const rows = new Map<string, WeekRow>();
+  for (const e of counted(entries)) {
+    const week = weekOf(e.timestamp);
+    if (!week) continue;
+    const row = rows.get(week) ?? { week, checks: 0, understood: 0 };
+    row.checks++;
+    if (gradeKind(e.grade) === "understood") row.understood++;
+    rows.set(week, row);
+  }
+  return Array.from(rows.values())
+    .sort((a, b) => a.week.localeCompare(b.week))
+    .slice(-limit);
+}
+
+export const DRIFT_MIN_CHECKS = 10;
+export const DRIFT_RECENT = 5;
+const DRIFT_POINTS = 20;
+
+const pct = (rate: number) => Math.round(100 * rate);
+
+/**
+ * One note when the latest DRIFT_RECENT counted checks moved the wrong way against the earlier
+ * ones: understood rate down, or delegated/agent share up, by DRIFT_POINTS or more (compared
+ * unrounded; only the message rounds). Null otherwise, and below DRIFT_MIN_CHECKS. Lines with an
+ * impossible date (2026-02-30) are left out, as in byWeek. Five checks is a small sample, so the
+ * note is a nudge.
+ */
+export function driftNote(entries: VivaEntry[]): string | null {
+  const dated = counted(entries)
+    .map((e, i) => ({ e, i, at: checkTime(e.timestamp) }))
+    .filter((x) => Number.isFinite(x.at) && weekOf(x.e.timestamp) !== null)
+    .sort((a, b) => a.at - b.at || a.i - b.i)
+    .map((x) => x.e);
+  if (dated.length < DRIFT_MIN_CHECKS) return null;
+  const recent = dated.slice(-DRIFT_RECENT);
+  const earlier = dated.slice(0, -DRIFT_RECENT);
+  const rate = (l: VivaEntry[], f: (e: VivaEntry) => boolean) => l.filter(f).length / l.length;
+  const understood = (e: VivaEntry) => gradeKind(e.grade) === "understood";
+  const handedOff = (e: VivaEntry) => e.aiUse === "delegated" || e.aiUse === "agent";
+  const threshold = DRIFT_POINTS / 100;
+  const [uNow, uBefore] = [rate(recent, understood), rate(earlier, understood)];
+  if (uBefore - uNow >= threshold)
+    return `Your last ${DRIFT_RECENT} checks were understood ${pct(uNow)}% of the time, against ${pct(uBefore)}% before. A small sample, but worth slowing down on the next change.`;
+  const [hNow, hBefore] = [rate(recent, handedOff), rate(earlier, handedOff)];
+  if (hNow - hBefore >= threshold)
+    return `${pct(hNow)}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${pct(hBefore)}% before. Asking the agent why keeps the understanding with you.`;
+  return null;
+}
+
 export function summariseTopics(entries: VivaEntry[], now?: Date): TopicSummary[] {
   return Array.from(groupByTopic(entries).entries())
     .map(([, list]) => {
