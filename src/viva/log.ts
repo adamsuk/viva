@@ -152,8 +152,11 @@ export interface BotClaimCounts extends BotClaimTally {
 
 /** A bot name as logged: lowercase letters, digits and hyphens, at most 40; anything else is unknown. */
 function readBot(value: string): string {
-  const v = value.trim().toLowerCase();
-  return /^[a-z0-9][a-z0-9-]{0,39}$/.test(v) && v !== "n/a" ? v : "unknown";
+  const v = value
+    .trim()
+    .toLowerCase()
+    .replace(/\[bot\]$/, "");
+  return /^[a-z0-9][a-z0-9-]{0,39}$/.test(v) ? v : "unknown";
 }
 
 /** How the bot comments you checked fared: review-comment checks that record a verdict. */
@@ -405,6 +408,8 @@ export function byWeek(entries: VivaEntry[], limit = 8): WeekRow[] {
 
 export const DRIFT_MIN_CHECKS = 10;
 export const DRIFT_RECENT = 5;
+/** Fewest checks recording ai-use, on each side, before comparing how often work was handed off. */
+export const DRIFT_MIN_RECORDED = 3;
 const DRIFT_POINTS = 20;
 
 const pct = (rate: number) => Math.round(100 * rate);
@@ -436,9 +441,15 @@ export function driftNote(entries: VivaEntry[]): string | null {
   const [uNow, uBefore] = [count(recent, understood), count(earlier, understood)];
   if (aheadBy(uBefore, earlier.length, uNow, recent.length))
     return `Your last ${DRIFT_RECENT} checks were understood ${pct(uNow / recent.length)}% of the time, against ${pct(uBefore / earlier.length)}% before. A small sample, but worth slowing down on the next change.`;
-  const [hNow, hBefore] = [count(recent, handedOff), count(earlier, handedOff)];
-  if (aheadBy(hNow, recent.length, hBefore, earlier.length))
-    return `${pct(hNow / recent.length)}% of your last ${DRIFT_RECENT} changes were delegated or built by an agent, against ${pct(hBefore / earlier.length)}% before. Asking the agent why keeps the understanding with you.`;
+  // Only checks that recorded how the change was made say anything about handing off; lines from
+  // before ai-use existed would read as "not handed off" and fake a rise. A thin baseline is no
+  // baseline, so both sides need DRIFT_MIN_RECORDED.
+  const recorded = (l: VivaEntry[]) => l.filter((e) => e.aiUse !== "unknown");
+  const [rNow, rBefore] = [recorded(recent), recorded(earlier)];
+  const [hNow, hBefore] = [count(rNow, handedOff), count(rBefore, handedOff)];
+  const enough = Math.min(rNow.length, rBefore.length) >= DRIFT_MIN_RECORDED;
+  if (enough && aheadBy(hNow, rNow.length, hBefore, rBefore.length))
+    return `${pct(hNow / rNow.length)}% of your recent recorded changes were delegated or built by an agent, against ${pct(hBefore / rBefore.length)}% before. Asking the agent why keeps the understanding with you.`;
   return null;
 }
 

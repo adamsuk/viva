@@ -351,7 +351,7 @@ test("driftNote flags a rise in delegated or agent-built changes", () => {
   );
   assert.match(
     note ?? "",
-    /100% of your last 5 changes were delegated or built by an agent, against 0% before/,
+    /100% of your recent recorded changes were delegated or built by an agent, against 0% before/,
   );
 });
 
@@ -422,7 +422,7 @@ test("driftNote fires on an exact 20-point change that floating point would miss
         ),
       ),
     ) ?? "",
-    /100% of your last 5 changes were delegated or built by an agent, against 80% before/,
+    /100% of your recent recorded changes were delegated or built by an agent, against 80% before/,
   );
 });
 
@@ -461,6 +461,7 @@ test("the sample shows every section of the map", () => {
   assert.equal(botClaims(entries).byBot.length, 2, "two bots");
   const versions = entries.map((e) => e.skillVersion);
   assert.deepEqual(versions, [...versions].sort(), "skill versions rise with the dates");
+  assert.equal(driftNote(entries), null, "no drift note on the sample");
 });
 
 test("a later line for the same check supersedes the earlier one", () => {
@@ -538,4 +539,49 @@ test("schema 0.6.0 records which bot made a checked comment, counted per bot", a
     { bot: "unknown", held: 1, partly: 1, wrong: 0, total: 2 },
     { bot: "copilot", held: 1, partly: 0, wrong: 0, total: 1 },
   ]);
+});
+
+test("driftNote ignores checks that never recorded how the change was made", () => {
+  // Five 0.3 lines (no ai-use) then five 0.4 lines with two delegated: no recorded baseline, no note.
+  const old = Array.from(
+    { length: 5 },
+    (_, i) => `2026-10-0${i + 1} 10:00 | 0.3.1 | r | m | a | t | 4 | understood | session | live`,
+  );
+  const recent = ["hand", "hand", "delegated", "agent", "hand"].map(
+    (u, i) =>
+      `2026-10-1${i} 10:00 | 0.4.1 | r | m | a | t | 4 | understood | session | live | ${u}`,
+  );
+  assert.equal(driftNote(parseVivaLog([...old, ...recent].join("\n"))), null);
+});
+
+test("bot names accept a [bot] login suffix", () => {
+  const line =
+    "2026-11-21 10:00 | 0.6.0 | r | pr-1 | a | t | 4 | understood | review-comment | live | unknown | held | coderabbitai[bot]";
+  assert.equal(parseVivaLog(line)[0].bot, "coderabbitai");
+});
+
+test("driftNote needs three recorded checks on each side before comparing hand-offs", () => {
+  const rows = [
+    "hand",
+    "hand",
+    "hand",
+    "unknown",
+    "unknown",
+    "hand",
+    "delegated",
+    "agent",
+    "delegated",
+    "hand",
+  ];
+  const log = rows.map(
+    (u, i) =>
+      `2026-10-1${i} 10:00 | 0.4.1 | r | m | a | t | 4 | understood | session | live | ${u}`,
+  );
+  // Earlier: 3 recorded hand (0%); recent: 5 recorded, 3 handed off (60%).
+  assert.match(
+    driftNote(parseVivaLog(log.join("\n"))) ?? "",
+    /60% of your recent recorded changes/,
+  );
+  log[1] = log[1].replace("| hand", "| unknown");
+  assert.equal(driftNote(parseVivaLog(log.join("\n"))), null, "only 2 recorded before");
 });

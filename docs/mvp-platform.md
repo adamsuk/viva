@@ -103,7 +103,7 @@ Schema 0.6.0, written by skill versions 0.6.x, adds a 13th field, `bot`: for a `
 YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot
 ```
 
-Lines are never rewritten. When a dispute stands after the line was written, or a bot comment's verdict is re-checked, the skill appends the same check again (every field copied except the skill version and the corrected grade or `bot-claim`; the map matches on timestamp, repo, branch-or-pr, commit-or-ref, topic and scope). The map keeps the last line for each check and says how many checks were corrected. Pasting a log merges line by line, so re-pasting adds nothing.
+Lines are never rewritten. When a dispute stands after the line was written, or a bot comment's verdict is re-checked, the skill appends the same check again in the current format (every field copied except the skill version and the corrected grade or `bot-claim`; fields an older line lacks take their defaults: `ai-use` `unknown`, `bot-claim` `n/a`, `bot` `unknown` for a review comment or `n/a`; the map matches on timestamp, repo, branch-or-pr, commit-or-ref, topic and scope). The map keeps the last line for each check and says how many checks were corrected. Pasting a log merges line by line, so re-pasting adds nothing.
 
 A skill change that alters the line format must add a new schema version here, then bump the skill to a new minor version. Existing versions never change, so old lines keep parsing.
 

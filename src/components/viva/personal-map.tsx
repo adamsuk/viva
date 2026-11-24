@@ -522,7 +522,7 @@ function BotComments({ counts }: { counts: BotClaimCounts }) {
             {counts.byBot.map((r) => (
               <tr key={r.bot} className="border-b border-line">
                 <th scope="row" className="py-1 pr-2 font-medium">
-                  {r.bot === "unknown" ? "Not recorded" : r.bot}
+                  {r.bot === "unknown" ? "Unknown" : r.bot}
                 </th>
                 <td className="py-1 pr-2 text-pass">{r.held}</td>
                 <td className="py-1 pr-2 text-hold">{r.partly}</td>
