@@ -10,6 +10,10 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 - An Over time section on the personal map: checks and understood per week for the latest 8 weeks with checks. With 10 or more checks, one drift note appears when the latest 5 were understood 20 points less often than the earlier ones, or were delegated or agent-built 20 points more often. It is worded as a small-sample nudge, and disputed checks are left out. Why: the map is meant to be a private, longitudinal view, the open ground in the prior-art scan, but it showed no time dimension, and `watch-habituation` warns that scrutiny thins quietly ([adamsuk/software-factory#488](https://github.com/adamsuk/software-factory/issues/488), [#12](https://github.com/adamsuk/viva/pull/12)).
 
+### Changed
+
+- The Skills page lists what the skills gained today: a question before you approve someone else's PR, re-checks of a topic missed a week or more ago (`viva` 0.4.3–0.4.4), and confidence and drift in `viva-assess` 0.2.2. The log schema's `scope` description now includes `review`; the fields are unchanged. Why: the Skills page is where people find out what the skills do, and the schema is the contract the skill reads ([adamsuk/software-factory#489](https://github.com/adamsuk/software-factory/issues/489), [#13](https://github.com/adamsuk/viva/pull/13)).
+
 ## 2026-11-23
 
 ### Added
