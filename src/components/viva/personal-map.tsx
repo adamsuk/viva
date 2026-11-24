@@ -3,8 +3,10 @@ import { RECOMMENDATIONS } from "@/viva/model";
 import {
   LOG_STORAGE_KEY,
   byAiUse,
+  byWeek,
   calibration,
   calibrationSentence,
+  driftNote,
   SAMPLE_LOG,
   gradeKind,
   habitFor,
@@ -17,6 +19,7 @@ import {
   type CalibrationRow,
   type NextStep,
   type TopicSummary,
+  type WeekRow,
 } from "@/viva/log";
 
 type Mode = "add" | "replace";
@@ -314,6 +317,7 @@ export function PersonalMap() {
 
           <Calibration rows={calibration(entries)} />
           <ByAiUse rows={byAiUse(entries)} />
+          <OverTime rows={byWeek(entries)} drift={driftNote(entries)} />
 
           <h3 className="mt-10 font-display text-2xl">Topics</h3>
           <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -460,6 +464,44 @@ function Calibration({ rows }: { rows: CalibrationRow[] }) {
         </tbody>
       </table>
       {sentence && <p className="mt-2 text-sm">{sentence}</p>}
+    </section>
+  );
+}
+
+function OverTime({ rows, drift }: { rows: WeekRow[]; drift: string | null }) {
+  if (rows.length < 2 && !drift) return null;
+  return (
+    <section aria-labelledby="over-time-heading" className="mt-10">
+      <h3 id="over-time-heading" className="font-display text-2xl">
+        Over time
+      </h3>
+      <p className="mt-1 max-w-2xl text-sm text-muted">
+        Checks per week, and how many you understood. Regular small checks matter more than any one
+        week&apos;s result.
+      </p>
+      {rows.length >= 2 && (
+        <table className="mt-3 w-full max-w-xl text-left text-sm">
+          <thead>
+            <tr className="border-b border-line font-mono text-xs uppercase tracking-wider text-faint">
+              <th className="py-1 pr-2 font-normal">Week of</th>
+              <th className="py-1 pr-2 font-normal">Checks</th>
+              <th className="py-1 pr-2 font-normal">Understood</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.week} className="border-b border-line">
+                <th scope="row" className="py-1 pr-2 font-medium">
+                  {r.week}
+                </th>
+                <td className="py-1 pr-2">{r.checks}</td>
+                <td className="py-1 pr-2 text-pass">{r.understood}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {drift && <p className="mt-2 text-sm">{drift}</p>}
     </section>
   );
 }
