@@ -44,7 +44,7 @@ const FIELDS_0_3: LogField[] = [
   },
   {
     name: "scope",
-    description: "session | checkout | last-commit | uncommitted | named | review-comment",
+    description: "session | checkout | last-commit | uncommitted | named | review-comment | review",
     example: "session",
   },
   { name: "live", description: "live | partly-live | hazard", example: "live" },

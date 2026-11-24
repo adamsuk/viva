@@ -31,6 +31,14 @@ export const SKILLS: SkillInfo[] = [
         text: "Point it at a CodeRabbit or other bot comment before you forward or act on it. It checks the claim against the code, then asks whether you could defend or refute it.",
       },
       {
+        name: "Before you approve",
+        text: "Reviewing someone else’s or an agent’s PR? Ask for one question on it before you approve. Anything you couldn’t explain is worth asking the author about first.",
+      },
+      {
+        name: "Re-checks what you missed",
+        text: "When your log shows a topic you missed a week or more ago and the change touches it, the question is a re-check on that area.",
+      },
+      {
         name: "How the change was made",
         text: "It records whether you wrote the change by hand, asked AI why, generated then understood it, delegated it, or an agent built it, so the map can show whether that tracks your understanding.",
       },
@@ -45,6 +53,10 @@ export const SKILLS: SkillInfo[] = [
       {
         name: "Leaves disputes out",
         text: "Disputed checks are a note about question quality, never a gap.",
+      },
+      {
+        name: "Confidence and drift",
+        text: "Says whether your sure answers were understood more often than unsure ones, and flags it when your latest checks slipped against earlier ones.",
       },
       {
         name: "Grades by how the change was made",
