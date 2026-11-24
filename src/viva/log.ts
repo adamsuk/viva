@@ -208,6 +208,12 @@ export function calibrationSentence(rows: CalibrationRow[]): string | null {
     : base;
 }
 
+function range(dates: string[]): string {
+  if (!dates.length) return "";
+  const [first, last] = [dates[0], dates[dates.length - 1]];
+  return first === last ? `, ${first}` : `, ${first} to ${last}`;
+}
+
 /**
  * A short markdown summary of the counted checks, for pasting into an experiment log. Counts only:
  * no repository, branch, commit or topic names, so it is safe to share.
@@ -218,20 +224,27 @@ export function summaryMarkdown(entries: VivaEntry[]): string {
     return k === "understood" || k === "partial" || k === "missed";
   });
   if (!counted.length) return "No counted checks yet.";
-  const dates = counted.map((e) => e.timestamp.trim().slice(0, 10)).sort();
+  // Only well-formed dates reach the summary: the timestamp field is free text in a hand-edited log.
+  const dates = counted
+    .map((e) => /^\d{4}-\d{2}-\d{2}/.exec(e.timestamp.trim())?.[0])
+    .filter((d): d is string => d !== undefined && weekOf(d) !== null)
+    .sort();
   const n = (k: GradeKind) => counted.filter((e) => gradeKind(e.grade) === k).length;
   const disputed = entries.filter((e) => gradeKind(e.grade) === "disputed").length;
   const topics = new Set(counted.map((e) => topicKey(e.topic))).size;
   const lines = [
-    `Viva summary, ${dates[0]} to ${dates[dates.length - 1]}: ${counted.length} check${counted.length === 1 ? "" : "s"} across ${topics} topic${topics === 1 ? "" : "s"}.`,
+    `Viva summary${range(dates)}: ${counted.length} check${counted.length === 1 ? "" : "s"} across ${topics} topic${topics === 1 ? "" : "s"}.`,
     `Understood ${n("understood")}, partial ${n("partial")}, missed ${n("missed")}${disputed ? `; ${disputed} disputed, left out` : ""}.`,
-    "",
-    "| Confidence | Understood | Partial | Missed |",
-    "|---|---|---|---|",
-    ...calibration(counted)
-      .filter((r) => r.total > 0)
-      .map((r) => `| ${r.bucket} | ${r.understood} | ${r.partial} | ${r.missed} |`),
   ];
+  const bands = calibration(counted).filter((r) => r.total > 0);
+  if (bands.length) {
+    lines.push(
+      "",
+      "| Confidence | Understood | Partial | Missed |",
+      "|---|---|---|---|",
+      ...bands.map((r) => `| ${r.bucket} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+    );
+  }
   const aiRows = byAiUse(counted);
   if (aiRows.some((r) => r.aiUse !== "unknown")) {
     lines.push(

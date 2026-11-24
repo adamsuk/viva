@@ -280,14 +280,21 @@ test("byWeek counts checks and understood per week, leaving out disputed and unr
 
 test("byWeek keeps only the latest weeks", () => {
   const log = Array.from({ length: 10 }, (_, i) =>
-    line(`2026-0${Math.floor(i / 4) + 1}-${String((i % 4) * 7 + 1).padStart(2, "0")}`, "understood"),
+    line(
+      `2026-0${Math.floor(i / 4) + 1}-${String((i % 4) * 7 + 1).padStart(2, "0")}`,
+      "understood",
+    ),
   ).join("\n");
   const rows = byWeek(parseVivaLog(log), 3);
   assert.equal(rows.length, 3);
   assert.ok(rows[0].week < rows[2].week);
 });
 
-const days = (n: number, grade: (i: number) => string, aiUse: (i: number) => string = () => "hand") =>
+const days = (
+  n: number,
+  grade: (i: number) => string,
+  aiUse: (i: number) => string = () => "hand",
+) =>
   Array.from({ length: n }, (_, i) =>
     line(`2026-10-${String(i + 1).padStart(2, "0")}`, grade(i), aiUse(i)),
   ).join("\n");
@@ -298,24 +305,41 @@ test("driftNote stays quiet below ten checks and when nothing moved", () => {
 });
 
 test("driftNote flags a drop in understood across the latest five", () => {
-  const note = driftNote(parseVivaLog(days(12, (i) => (i < 7 ? "understood" : i < 9 ? "missed" : "understood"))));
+  const note = driftNote(
+    parseVivaLog(days(12, (i) => (i < 7 ? "understood" : i < 9 ? "missed" : "understood"))),
+  );
   assert.match(note ?? "", /understood 60% of the time, against 100% before/);
 });
 
 test("driftNote flags a rise in delegated or agent-built changes", () => {
   const note = driftNote(
-    parseVivaLog(days(12, () => "understood", (i) => (i < 7 ? "hand" : i % 2 ? "agent" : "delegated"))),
+    parseVivaLog(
+      days(
+        12,
+        () => "understood",
+        (i) => (i < 7 ? "hand" : i % 2 ? "agent" : "delegated"),
+      ),
+    ),
   );
-  assert.match(note ?? "", /100% of your last 5 changes were delegated or built by an agent, against 0% before/);
+  assert.match(
+    note ?? "",
+    /100% of your last 5 changes were delegated or built by an agent, against 0% before/,
+  );
 });
 
 test("driftNote orders by time, not by line, and ignores disputed checks", () => {
-  const lines = days(12, (i) => (i < 7 ? "understood" : "missed")).split("\n").reverse();
+  const lines = days(12, (i) => (i < 7 ? "understood" : "missed"))
+    .split("\n")
+    .reverse();
   lines.push(line("2026-10-30", "disputed"));
   assert.match(driftNote(parseVivaLog(lines.join("\n"))) ?? "", /understood 0% of the time/);
 });
 
-const seq = (n: number, grade: (i: number) => string, aiUse: (i: number) => string = () => "hand") =>
+const seq = (
+  n: number,
+  grade: (i: number) => string,
+  aiUse: (i: number) => string = () => "hand",
+) =>
   Array.from({ length: n }, (_, i) => {
     const d = new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10);
     return line(d, grade(i), aiUse(i));
@@ -326,7 +350,15 @@ test("driftNote compares unrounded rates: just under 20 points is quiet, exactly
   assert.equal(driftNote(parseVivaLog(seq(46, (i) => (i < 8 ? "understood" : "missed")))), null);
   // 33 of 41 earlier delegated (80.5%), all 5 recent: a 19.5-point rise.
   assert.equal(
-    driftNote(parseVivaLog(seq(46, () => "understood", (i) => (i < 33 || i >= 41 ? "delegated" : "hand")))),
+    driftNote(
+      parseVivaLog(
+        seq(
+          46,
+          () => "understood",
+          (i) => (i < 33 || i >= 41 ? "delegated" : "hand"),
+        ),
+      ),
+    ),
     null,
   );
   // 2 of 5 earlier understood (40%), 1 of 5 recent (20%): exactly 20 points.
@@ -337,6 +369,25 @@ test("driftNote compares unrounded rates: just under 20 points is quiet, exactly
 });
 
 test("driftNote leaves out impossible dates, as byWeek does", () => {
-  const nine = Array.from({ length: 9 }, (_, i) => line(`2026-02-${20 + i}`, "understood")).join("\n");
+  const nine = Array.from({ length: 9 }, (_, i) => line(`2026-02-${20 + i}`, "understood")).join(
+    "\n",
+  );
   assert.equal(driftNote(parseVivaLog(`${nine}\n${line("2026-02-30", "missed")}`)), null);
+});
+
+test("summaryMarkdown never shows a timestamp that isn't a date, and skips empty tables", () => {
+  const log = [
+    "2026-11-02 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+    "acme-payments-secret 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+    "2026-02-30 10:00 | 0.4.3 | o/r | pr-1 | abc | t | 4 | understood | session | live | hand",
+  ].join("\n");
+  const md = summaryMarkdown(parseVivaLog(log));
+  assert.ok(!md.includes("acme"), md);
+  assert.ok(!md.includes("2026-02-30"), md);
+  assert.match(md, /^Viva summary, 2026-11-02: 3 checks across 1 topic\./);
+  const undated =
+    "yesterday | 0.4.3 | o/r | pr-1 | abc | t | ? | understood | session | live | unknown";
+  const md2 = summaryMarkdown(parseVivaLog(undated));
+  assert.match(md2, /^Viva summary: 1 check across 1 topic\./);
+  assert.ok(!md2.includes("| Confidence |"), md2);
 });

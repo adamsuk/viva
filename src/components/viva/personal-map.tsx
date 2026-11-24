@@ -104,11 +104,14 @@ export function PersonalMap() {
   }
 
   async function copySummary() {
+    setCopied(null);
     try {
       await navigator.clipboard.writeText(summaryMarkdown(entries));
       setCopied("Copied. Counts only: no repositories, branches or topics.");
     } catch {
-      setCopied("This browser blocked the clipboard. Download the log and run viva-assess instead.");
+      setCopied(
+        "This browser blocked the clipboard. Download the log and run viva-assess instead.",
+      );
     }
   }
 
