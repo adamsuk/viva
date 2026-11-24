@@ -51,6 +51,8 @@ export interface ParsedLog {
   skipped: number;
   /** Lines whose version matched no schema; read with the oldest schema. */
   unknownVersion: number;
+  /** Checks whose earlier line was replaced by a later correction (for example a dispute). */
+  superseded: number;
 }
 
 export function parseVivaLog(text: string): VivaEntry[] {
@@ -74,8 +76,27 @@ export function parseVivaLogDetailed(text: string): ParsedLog {
     if (!known) unknownVersion++;
     entries.push(entry);
   }
-  entries.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-  return { entries, skipped, unknownVersion };
+  // The skill never rewrites a line. When a dispute stands, or a bot verdict is re-checked, it
+  // appends the same check again with the new grade; the later line wins.
+  const latest = new Map<string, VivaEntry>();
+  const versions = new Map<string, Set<string>>();
+  for (const e of entries) {
+    const key = checkKey(e);
+    latest.set(key, e);
+    versions.set(key, (versions.get(key) ?? new Set()).add(e.raw));
+  }
+  // Checks with more than one distinct line were corrected; an exact repeat is not a correction.
+  const superseded = Array.from(versions.values()).filter((v) => v.size > 1).length;
+  const kept = Array.from(latest.values());
+  kept.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  return { entries: kept, skipped, unknownVersion, superseded };
+}
+
+/** One check: when, where, on what, and in which scope. A later line with the same key is a correction. */
+function checkKey(e: VivaEntry): string {
+  return [e.timestamp, e.repo, e.branchOrPr, e.commitOrRef, topicKey(e.topic), e.scope]
+    .map((f) => f.trim())
+    .join("\u0000");
 }
 
 function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
@@ -486,18 +507,28 @@ export function habitFor(topics: TopicSummary[]): NextStep | null {
 export const LOG_STORAGE_KEY = "viva:personal-map:log";
 
 /**
- * Merge new log text into what is already kept. Blank and comment lines are dropped, identical
- * lines (after trimming) are kept once, and the existing order comes first. Unparseable lines are
- * kept so a newer skill's lines survive until the platform learns their schema.
+ * Merge new log text into what is already kept. Blank and comment lines are dropped, lines are
+ * trimmed, and the existing order comes first. An incoming line is added only as many times as it
+ * appears beyond the existing copies, so re-pasting adds nothing but a reverting correction stays.
+ * Unparseable lines are kept so a newer skill's lines survive until the platform learns their schema.
  */
 export function mergeLogs(existing: string, incoming: string): string {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of `${existing}\n${incoming}`.split("\n")) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#") || seen.has(line)) continue;
-    seen.add(line);
-    out.push(line);
+  // A multiset merge: keep every existing line, and add an incoming line only when the paste holds
+  // it more times than the existing log does. Re-pasting the same log adds nothing, while a
+  // correction that reverts to an earlier line (held, then wrong, then held) keeps all three.
+  const clean = (text: string) =>
+    text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"));
+  const out = clean(existing);
+  const have = new Map<string, number>();
+  for (const line of out) have.set(line, (have.get(line) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  for (const line of clean(incoming)) {
+    const n = (seen.get(line) ?? 0) + 1;
+    seen.set(line, n);
+    if (n > (have.get(line) ?? 0)) out.push(line);
   }
   return out.length ? `${out.join("\n")}\n` : "";
 }

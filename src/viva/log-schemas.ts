@@ -97,7 +97,7 @@ export const LOG_SCHEMAS: LogSchema[] = [
       },
     ],
     notes:
-      "One line per check. Version is always the second field so the parser can dispatch. botClaim: held (the claim was right), partly, wrong (the claim did not hold), n/a (not a review-comment check). aiUse as in 0.4.0.",
+      "One line per check. Version is always the second field so the parser can dispatch. botClaim: held (the claim was right), partly, wrong (the claim did not hold), n/a (not a review-comment check). aiUse as in 0.4.0. Lines are never rewritten: to correct a check (a dispute that stands, a changed verdict), append it again with every field copied except the skill version and the corrected grade or botClaim; the last line for a timestamp, repo, branchOrPr, commitOrRef, topic and scope wins.",
   },
 ];
 

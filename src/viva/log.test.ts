@@ -404,12 +404,22 @@ test("driftNote leaves out impossible dates, as byWeek does", () => {
 test("driftNote fires on an exact 20-point change that floating point would miss", () => {
   // 3 of 5 earlier understood, 2 of 5 recent: 0.6 - 0.4 is 0.19999999999999996 in floating point.
   assert.match(
-    driftNote(parseVivaLog(seq(10, (i) => (i < 3 || (i >= 5 && i < 7) ? "understood" : "missed")))) ?? "",
+    driftNote(
+      parseVivaLog(seq(10, (i) => (i < 3 || (i >= 5 && i < 7) ? "understood" : "missed"))),
+    ) ?? "",
     /understood 40% of the time, against 60% before/,
   );
   // 4 of 5 earlier delegated, 5 of 5 recent: 1.0 - 0.8 is 0.19999999999999996 too.
   assert.match(
-    driftNote(parseVivaLog(seq(10, () => "understood", (i) => (i === 4 ? "hand" : "delegated")))) ?? "",
+    driftNote(
+      parseVivaLog(
+        seq(
+          10,
+          () => "understood",
+          (i) => (i === 4 ? "hand" : "delegated"),
+        ),
+      ),
+    ) ?? "",
     /100% of your last 5 changes were delegated or built by an agent, against 80% before/,
   );
 });
@@ -436,8 +446,68 @@ test("the sample shows every section of the map", () => {
   assert.equal(skipped, 0);
   assert.equal(unknownVersion, 0);
   assert.ok(byWeek(entries).length >= 2, "Over time needs two weeks");
-  assert.ok(byAiUse(entries).some((r) => r.aiUse !== "unknown"), "how the change was made");
+  assert.ok(
+    byAiUse(entries).some((r) => r.aiUse !== "unknown"),
+    "how the change was made",
+  );
   assert.deepEqual(botClaims(entries), { held: 1, partly: 0, wrong: 1, total: 2 });
   assert.ok(calibration(entries).some((r) => r.total > 0));
-  assert.ok(entries.some((e) => e.scope === "review"), "a review-scope check");
+  assert.ok(
+    entries.some((e) => e.scope === "review"),
+    "a review-scope check",
+  );
+});
+
+test("a later line for the same check supersedes the earlier one", () => {
+  const log = [
+    "2026-11-21 10:00 | 0.5.0 | r | pr-1 | a | retry | 5 | missed | session | live | hand | n/a",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-2 | b | claim | 4 | understood | review-comment | live | unknown | held",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-1 | a | Retry  | 5 | disputed | session | live | hand | n/a",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-2 | b | claim | 4 | understood | review-comment | live | unknown | wrong",
+    "2026-11-21 10:00 | 0.5.0 | r | pr-3 | c | retry | 3 | partial | session | live | hand | n/a",
+  ].join("\n");
+  const { entries, superseded } = parseVivaLogDetailed(log);
+  assert.equal(superseded, 2);
+  assert.deepEqual(
+    entries.map((e) => [e.branchOrPr, e.grade, e.botClaim]),
+    [
+      ["pr-1", "disputed", "n/a"],
+      ["pr-2", "understood", "wrong"],
+      ["pr-3", "partial", "n/a"],
+    ],
+  );
+  assert.deepEqual(botClaims(entries), { held: 0, partly: 0, wrong: 1, total: 1 });
+  assert.equal(parseVivaLogDetailed(SAMPLE_LOG).superseded, 0);
+});
+
+test("pasting a log keeps a correction that reverts to the original line", () => {
+  const held =
+    "2026-11-21 10:00 | 0.5.1 | r | pr-2 | b | claim | 4 | understood | review-comment | live | unknown | held";
+  const wrong = held.replace("| held", "| wrong");
+  const file = [held, wrong, held].join("\n");
+  assert.deepEqual(
+    parseVivaLog(file).map((e) => e.botClaim),
+    ["held"],
+  );
+  const merged = mergeLogs("", file);
+  assert.deepEqual(
+    parseVivaLog(merged).map((e) => e.botClaim),
+    ["held"],
+  );
+  assert.equal(mergeLogs(merged, file), merged, "re-pasting adds nothing");
+  assert.equal(mergeLogs(merged, [held, wrong].join("\n")), merged, "an older copy adds nothing");
+  assert.equal(parseVivaLogDetailed(merged).superseded, 1, "one check corrected, counted once");
+  assert.equal(
+    parseVivaLogDetailed([held, held].join("\n")).superseded,
+    0,
+    "a repeat is not a correction",
+  );
+});
+
+test("a correction must keep the scope: other scopes are separate checks", () => {
+  const a =
+    "2026-11-21 10:00 | 0.5.1 | r | pr-2 | b | claim | 4 | understood | review-comment | live | unknown | held";
+  const b =
+    "2026-11-21 10:00 | 0.5.1 | r | pr-2 | b | claim | 4 | understood | review | live | agent | n/a";
+  assert.equal(parseVivaLog([a, b].join("\n")).length, 2);
 });
