@@ -503,6 +503,12 @@ export function mergeLogs(existing: string, incoming: string): string {
 }
 
 export const SAMPLE_LOG = `# Sample viva skill log (for trying the map)
+2026-11-03 10:15 | 0.4.1 | adamsuk/example | pr-4 | aa11bb2 | cache invalidation | 4 | understood | session | live | hand
+2026-11-04 15:30 | 0.4.1 | adamsuk/example | pr-5 | bb22cc3 | webhook retry | 3 | partial | session | live | delegated
+2026-11-06 09:45 | 0.5.0 | adamsuk/example | pr-5 | bb22cc3 | retry backoff claim | 4 | understood | review-comment | live | unknown | wrong
+2026-11-10 13:20 | 0.5.0 | adamsuk/example | pr-7 | cc33dd4 | cache invalidation | 2 | understood | checkout | live | explained | n/a
+2026-11-11 17:05 | 0.5.0 | adamsuk/example | pr-8 | dd44ee5 | null handling claim | 3 | partial | review-comment | live | unknown | held
+2026-11-13 11:50 | 0.5.0 | adamsuk/example | pr-9 | ee55ff6 | auth middleware | 4 | understood | review | live | agent | n/a
 2026-11-18 14:22 | 0.3.1 | adamsuk/example | pr-12 | abc1234 | webhook retry | 4 | understood | session | live
 2026-11-19 09:10 | 0.3.1 | adamsuk/example | pr-18 | def5678 | idempotency key | 5 | missed | checkout | live
 2026-11-19 16:40 | 0.3.1 | adamsuk/example | pr-18 | def5678 | idempotency key | 3 | partial | session | live
