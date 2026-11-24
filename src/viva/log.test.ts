@@ -20,10 +20,12 @@ import {
   SAMPLE_LOG,
 } from "./log.ts";
 
+const tally = ({ byBot: _byBot, ...totals }: ReturnType<typeof botClaims>) => totals;
+
 test("parses the skill log format", () => {
   const entries = parseVivaLog(SAMPLE_LOG);
   assert.equal(entries.length, 10);
-  const miss = entries.find((e) => e.timestamp === "2026-11-19 09:10");
+  const miss = entries.find((e) => e.timestamp === "2026-10-28 09:10");
   assert.equal(miss?.topic, "idempotency key");
   assert.equal(miss?.confidence, 5);
   assert.equal(miss?.grade, "missed");
@@ -163,7 +165,7 @@ test("calibration counts confidence against grade, without disputed or unreadabl
 
 test("schema 0.4 adds how the change was made, and 0.3 lines still parse", async () => {
   const { CURRENT_LOG_SCHEMA, schemaFor } = await import("./log-schemas.ts");
-  assert.equal(CURRENT_LOG_SCHEMA.version, "0.5.0");
+  assert.equal(CURRENT_LOG_SCHEMA.version, "0.6.0");
   assert.equal(schemaFor("0.4.2")?.version, "0.4.0");
   assert.equal(schemaFor("0.3.3")?.version, "0.3.1");
   const log = [
@@ -249,8 +251,8 @@ test("schema 0.5.0 reads botClaim; older lines and other values read as n/a", as
     entries.map((e) => e.botClaim),
     ["wrong", "held", "partly", "n/a", "n/a", "wrong", "n/a", "n/a"],
   );
-  assert.deepEqual(botClaims(entries), { held: 1, partly: 1, wrong: 1, total: 3 });
-  assert.deepEqual(botClaims([]), { held: 0, partly: 0, wrong: 0, total: 0 });
+  assert.deepEqual(tally(botClaims(entries)), { held: 1, partly: 1, wrong: 1, total: 3 });
+  assert.deepEqual(tally(botClaims([])), { held: 0, partly: 0, wrong: 0, total: 0 });
 });
 
 test("summaryMarkdown gives counts only, leaving out disputed checks", () => {
@@ -450,12 +452,15 @@ test("the sample shows every section of the map", () => {
     byAiUse(entries).some((r) => r.aiUse !== "unknown"),
     "how the change was made",
   );
-  assert.deepEqual(botClaims(entries), { held: 1, partly: 0, wrong: 1, total: 2 });
+  assert.deepEqual(tally(botClaims(entries)), { held: 1, partly: 0, wrong: 1, total: 2 });
   assert.ok(calibration(entries).some((r) => r.total > 0));
   assert.ok(
     entries.some((e) => e.scope === "review"),
     "a review-scope check",
   );
+  assert.equal(botClaims(entries).byBot.length, 2, "two bots");
+  const versions = entries.map((e) => e.skillVersion);
+  assert.deepEqual(versions, [...versions].sort(), "skill versions rise with the dates");
 });
 
 test("a later line for the same check supersedes the earlier one", () => {
@@ -476,7 +481,7 @@ test("a later line for the same check supersedes the earlier one", () => {
       ["pr-3", "partial", "n/a"],
     ],
   );
-  assert.deepEqual(botClaims(entries), { held: 0, partly: 0, wrong: 1, total: 1 });
+  assert.deepEqual(tally(botClaims(entries)), { held: 0, partly: 0, wrong: 1, total: 1 });
   assert.equal(parseVivaLogDetailed(SAMPLE_LOG).superseded, 0);
 });
 
@@ -510,4 +515,27 @@ test("a correction must keep the scope: other scopes are separate checks", () =>
   const b =
     "2026-11-21 10:00 | 0.5.1 | r | pr-2 | b | claim | 4 | understood | review | live | agent | n/a";
   assert.equal(parseVivaLog([a, b].join("\n")).length, 2);
+});
+
+test("schema 0.6.0 records which bot made a checked comment, counted per bot", async () => {
+  const { schemaFor } = await import("./log-schemas.ts");
+  assert.equal(schemaFor("0.6.2")?.version, "0.6.0");
+  const log = [
+    "2026-11-21 10:00 | 0.6.0 | r | pr-1 | a | t1 | 4 | understood | review-comment | live | unknown | wrong | CodeRabbit",
+    "2026-11-21 11:00 | 0.6.0 | r | pr-1 | a | t2 | 4 | understood | review-comment | live | unknown | held | coderabbit",
+    "2026-11-21 12:00 | 0.6.0 | r | pr-1 | a | t3 | 4 | understood | review-comment | live | unknown | held | copilot",
+    "2026-11-21 13:00 | 0.6.0 | r | pr-1 | a | t4 | 4 | understood | review-comment | live | unknown | partly | <script>",
+    "2026-11-21 14:00 | 0.5.1 | r | pr-1 | a | t5 | 4 | understood | review-comment | live | unknown | held",
+    "2026-11-21 15:00 | 0.6.0 | r | pr-1 | a | t6 | 4 | understood | session | live | hand | n/a | coderabbit",
+  ].join("\n");
+  const entries = parseVivaLog(log);
+  assert.deepEqual(
+    entries.map((e) => e.bot),
+    ["coderabbit", "coderabbit", "copilot", "unknown", "unknown", "n/a"],
+  );
+  assert.deepEqual(botClaims(entries).byBot, [
+    { bot: "coderabbit", held: 1, partly: 0, wrong: 1, total: 2 },
+    { bot: "unknown", held: 1, partly: 1, wrong: 0, total: 2 },
+    { bot: "copilot", held: 1, partly: 0, wrong: 0, total: 1 },
+  ]);
 });

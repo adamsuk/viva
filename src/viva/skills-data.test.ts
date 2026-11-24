@@ -27,3 +27,12 @@ test("every agent gets an install command for both skills", () => {
   }
   assert.equal(installCommand("viva"), "npx skills add adamsuk/viva-skills --skill viva");
 });
+
+test("the Skills page says the bot verdict is kept and viva-assess reports how the bots fared", () => {
+  const text = (name: string) =>
+    SKILLS.find((s) => s.name === name)!
+      .features.map((f) => `${f.name} ${f.text}`)
+      .join(" ");
+  assert.match(text("viva"), /claim held, and which bot/i);
+  assert.match(text("viva-assess"), /bot/i);
+});

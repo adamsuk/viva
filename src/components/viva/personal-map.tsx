@@ -54,6 +54,7 @@ export function PersonalMap() {
   const [error, setError] = useState<string | null>(null);
   const [sample, setSample] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [fallback, setFallback] = useState<string | null>(null);
   const usedSample = sample !== null;
 
   useEffect(() => {
@@ -69,6 +70,7 @@ export function PersonalMap() {
     }
     setError(null);
     setCopied(null);
+    setFallback(null);
     if (sample) {
       // The sample is for trying the map. It is shown, never kept.
       setSample(raw);
@@ -92,6 +94,7 @@ export function PersonalMap() {
     setSample(null);
     setError(null);
     setCopied(null);
+    setFallback(null);
     setStorageOk(writeStored(""));
   }
 
@@ -107,13 +110,13 @@ export function PersonalMap() {
 
   async function copySummary() {
     setCopied(null);
+    setFallback(null);
     try {
       await navigator.clipboard.writeText(summaryMarkdown(entries));
       setCopied("Copied. Counts only: no repositories, branches or topics.");
     } catch {
-      setCopied(
-        "This browser blocked the clipboard. Download the log and run viva-assess instead.",
-      );
+      setCopied("This browser blocked the clipboard. Select the summary below and copy it.");
+      setFallback(summaryMarkdown(entries));
     }
   }
 
@@ -291,6 +294,16 @@ export function PersonalMap() {
             <p role="status" className="mt-2 text-sm text-muted">
               {copied}
             </p>
+          )}
+          {!usedSample && fallback && (
+            <textarea
+              readOnly
+              aria-label="Summary to copy"
+              value={fallback}
+              rows={Math.min(14, fallback.split("\n").length + 1)}
+              onFocus={(e) => e.currentTarget.select()}
+              className="mt-2 w-full max-w-xl rounded-2xl border border-line bg-paper p-3 font-mono text-xs"
+            />
           )}
 
           {thin.length > 0 && (
@@ -495,6 +508,30 @@ function BotComments({ counts }: { counts: BotClaimCounts }) {
         <span className="text-hold">{counts.partly} partly</span>,{" "}
         <span className="text-fail">{counts.wrong} wrong</span>.
       </p>
+      {counts.byBot.length > 1 && (
+        <table className="mt-3 w-full max-w-xl text-left text-sm">
+          <thead>
+            <tr className="border-b border-line font-mono text-xs uppercase tracking-wider text-faint">
+              <th className="py-1 pr-2 font-normal">Bot</th>
+              <th className="py-1 pr-2 font-normal">Held</th>
+              <th className="py-1 pr-2 font-normal">Partly</th>
+              <th className="py-1 pr-2 font-normal">Wrong</th>
+            </tr>
+          </thead>
+          <tbody>
+            {counts.byBot.map((r) => (
+              <tr key={r.bot} className="border-b border-line">
+                <th scope="row" className="py-1 pr-2 font-medium">
+                  {r.bot === "unknown" ? "Not recorded" : r.bot}
+                </th>
+                <td className="py-1 pr-2 text-pass">{r.held}</td>
+                <td className="py-1 pr-2 text-hold">{r.partly}</td>
+                <td className="py-1 pr-2 text-fail">{r.wrong}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }

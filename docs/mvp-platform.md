@@ -97,6 +97,12 @@ YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-t
 
 `grade` can also be `disputed` (the user disputed the question and the agent agreed it was faulty); the map leaves disputed checks out of its signals. `scope` can also be `review-comment` (a check on a bot review comment before forwarding it) or `review` (a check before approving someone else's PR).
 
+Schema 0.6.0, written by skill versions 0.6.x, adds a 13th field, `bot`: for a `review-comment` check, the bot that made the comment, as a short lowercase name such as `coderabbit` or `copilot` (letters, digits and hyphens). Every other scope writes `n/a`. Older review-comment lines read as `unknown`. The map breaks the bot-comment counts down per bot once more than one appears, because the guide recommends tracking each bot and re-testing it when its model changes.
+
+```
+YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot
+```
+
 Lines are never rewritten. When a dispute stands after the line was written, or a bot comment's verdict is re-checked, the skill appends the same check again (every field copied except the skill version and the corrected grade or `bot-claim`; the map matches on timestamp, repo, branch-or-pr, commit-or-ref, topic and scope). The map keeps the last line for each check and says how many checks were corrected. Pasting a log merges line by line, so re-pasting adds nothing.
 
 A skill change that alters the line format must add a new schema version here, then bump the skill to a new minor version. Existing versions never change, so old lines keep parsing.

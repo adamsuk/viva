@@ -26,6 +26,8 @@ export interface VivaEntry {
   aiUse: AiUse;
   /** Whether a checked bot comment's claim held (schema 0.5+). `n/a` for other checks and older lines. */
   botClaim: BotClaim;
+  /** For a review-comment check, which bot made the comment (schema 0.6+); `unknown` before 0.6, `n/a` for other scopes. */
+  bot: string;
   raw: string;
   schemaVersion: string;
 }
@@ -120,6 +122,7 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
     // Only a review-comment check has a bot claim; anything else in that field reads as n/a.
     botClaim:
       get("scope").toLowerCase() === "review-comment" ? readBotClaim(get("botClaim")) : "n/a",
+    bot: get("scope").toLowerCase() === "review-comment" ? readBot(get("bot")) : "n/a",
     raw: line,
     schemaVersion: schema.version,
   };
@@ -135,22 +138,41 @@ function readBotClaim(value: string): BotClaim {
   return (BOT_CLAIM_VALUES as readonly string[]).includes(v) ? (v as BotClaim) : "n/a";
 }
 
-export interface BotClaimCounts {
+export interface BotClaimTally {
   held: number;
   partly: number;
   wrong: number;
   total: number;
 }
 
+export interface BotClaimCounts extends BotClaimTally {
+  /** The same counts per bot, most-checked first. */
+  byBot: (BotClaimTally & { bot: string })[];
+}
+
+/** A bot name as logged: lowercase letters, digits and hyphens, at most 40; anything else is unknown. */
+function readBot(value: string): string {
+  const v = value.trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9-]{0,39}$/.test(v) && v !== "n/a" ? v : "unknown";
+}
+
 /** How the bot comments you checked fared: review-comment checks that record a verdict. */
 export function botClaims(entries: VivaEntry[]): BotClaimCounts {
-  const counts: BotClaimCounts = { held: 0, partly: 0, wrong: 0, total: 0 };
+  const counts: BotClaimCounts = { held: 0, partly: 0, wrong: 0, total: 0, byBot: [] };
+  const perBot = new Map<string, BotClaimTally & { bot: string }>();
   for (const e of entries) {
     if (e.scope.trim().toLowerCase() !== "review-comment" || e.botClaim === "n/a") continue;
     if (gradeKind(e.grade) === "disputed") continue;
     counts[e.botClaim]++;
     counts.total++;
+    const row = perBot.get(e.bot) ?? { bot: e.bot, held: 0, partly: 0, wrong: 0, total: 0 };
+    row[e.botClaim]++;
+    row.total++;
+    perBot.set(e.bot, row);
   }
+  counts.byBot = Array.from(perBot.values()).sort(
+    (a, b) => b.total - a.total || a.bot.localeCompare(b.bot),
+  );
   return counts;
 }
 
@@ -534,14 +556,14 @@ export function mergeLogs(existing: string, incoming: string): string {
 }
 
 export const SAMPLE_LOG = `# Sample viva skill log (for trying the map)
+2026-10-27 14:22 | 0.3.1 | adamsuk/example | pr-12 | abc1234 | webhook retry | 4 | understood | session | live
+2026-10-28 09:10 | 0.3.1 | adamsuk/example | pr-18 | def5678 | idempotency key | 5 | missed | checkout | live
+2026-10-28 16:40 | 0.3.1 | adamsuk/example | pr-18 | def5678 | idempotency key | 3 | partial | session | live
+2026-10-29 11:05 | 0.3.1 | adamsuk/example | main | ghi9012 | skill logging path | 2 | understood | last-commit | live
 2026-11-03 10:15 | 0.4.1 | adamsuk/example | pr-4 | aa11bb2 | cache invalidation | 4 | understood | session | live | hand
 2026-11-04 15:30 | 0.4.1 | adamsuk/example | pr-5 | bb22cc3 | webhook retry | 3 | partial | session | live | delegated
-2026-11-06 09:45 | 0.5.0 | adamsuk/example | pr-5 | bb22cc3 | retry backoff claim | 4 | understood | review-comment | live | unknown | wrong
 2026-11-10 13:20 | 0.5.0 | adamsuk/example | pr-7 | cc33dd4 | cache invalidation | 2 | understood | checkout | live | explained | n/a
-2026-11-11 17:05 | 0.5.0 | adamsuk/example | pr-8 | dd44ee5 | null handling claim | 3 | partial | review-comment | live | unknown | held
 2026-11-13 11:50 | 0.5.0 | adamsuk/example | pr-9 | ee55ff6 | auth middleware | 4 | understood | review | live | agent | n/a
-2026-11-18 14:22 | 0.3.1 | adamsuk/example | pr-12 | abc1234 | webhook retry | 4 | understood | session | live
-2026-11-19 09:10 | 0.3.1 | adamsuk/example | pr-18 | def5678 | idempotency key | 5 | missed | checkout | live
-2026-11-19 16:40 | 0.3.1 | adamsuk/example | pr-18 | def5678 | idempotency key | 3 | partial | session | live
-2026-11-20 11:05 | 0.3.1 | adamsuk/example | main | ghi9012 | skill logging path | 2 | understood | last-commit | live
+2026-11-16 09:45 | 0.6.0 | adamsuk/example | pr-10 | ff66aa7 | retry backoff claim | 4 | understood | review-comment | live | unknown | wrong | coderabbit
+2026-11-18 17:05 | 0.6.0 | adamsuk/example | pr-11 | 1a2b3c4 | null handling claim | 3 | partial | review-comment | live | unknown | held | copilot
 `;
