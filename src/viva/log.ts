@@ -3,9 +3,11 @@
 
 import {
   AI_USE_VALUES,
+  BOT_CLAIM_VALUES,
   LOG_SCHEMAS,
   schemaFor,
   type AiUse,
+  type BotClaim,
   type LogSchema,
 } from "./log-schemas.ts";
 
@@ -22,6 +24,8 @@ export interface VivaEntry {
   live: string;
   /** How the change was made (schema 0.4+). `unknown` for older lines or unreadable values. */
   aiUse: AiUse;
+  /** Whether a checked bot comment's claim held (schema 0.5+). `n/a` for other checks and older lines. */
+  botClaim: BotClaim;
   raw: string;
   schemaVersion: string;
 }
@@ -92,6 +96,7 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
     scope: get("scope"),
     live: get("live"),
     aiUse: readAiUse(get("aiUse")),
+    botClaim: readBotClaim(get("botClaim")),
     raw: line,
     schemaVersion: schema.version,
   };
@@ -100,6 +105,30 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
 function readAiUse(value: string): AiUse {
   const v = value.trim().toLowerCase();
   return (AI_USE_VALUES as readonly string[]).includes(v) ? (v as AiUse) : "unknown";
+}
+
+function readBotClaim(value: string): BotClaim {
+  const v = value.trim().toLowerCase();
+  return (BOT_CLAIM_VALUES as readonly string[]).includes(v) ? (v as BotClaim) : "n/a";
+}
+
+export interface BotClaimCounts {
+  held: number;
+  partly: number;
+  wrong: number;
+  total: number;
+}
+
+/** How the bot comments you checked fared: review-comment checks that record a verdict. */
+export function botClaims(entries: VivaEntry[]): BotClaimCounts {
+  const counts: BotClaimCounts = { held: 0, partly: 0, wrong: 0, total: 0 };
+  for (const e of entries) {
+    if (e.scope.trim().toLowerCase() !== "review-comment" || e.botClaim === "n/a") continue;
+    if (gradeKind(e.grade) === "disputed") continue;
+    counts[e.botClaim]++;
+    counts.total++;
+  }
+  return counts;
 }
 
 export interface AiUseRow {

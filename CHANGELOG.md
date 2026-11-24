@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-24
+
+### Added
+
+- Log schema 0.5.0 (skill 0.5.x) adds a 12th field, `bot-claim`: for a `review-comment` check, whether the bot's claim held when verified against the code (`held`, `partly`, `wrong`, or `n/a` for other scopes). Older lines read as `n/a`. The personal map gains a Bot comments you checked line with the counts, leaving out disputed checks. Why: the guide's `track-acceptance` recommends tracking how often bot comments hold up, because a bot nobody listens to trains people to ignore it. The skill already verified each claim but never kept the verdict ([adamsuk/software-factory#491](https://github.com/adamsuk/software-factory/issues/491), [#15](https://github.com/adamsuk/viva/pull/15)).
+
 ## 2026-11-23
 
 ### Added

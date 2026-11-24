@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { RECOMMENDATIONS } from "@/viva/model";
 import {
   LOG_STORAGE_KEY,
+  botClaims,
   byAiUse,
   calibration,
   calibrationSentence,
@@ -13,6 +14,7 @@ import {
   parseVivaLogDetailed,
   summariseTopics,
   type AiUseRow,
+  type BotClaimCounts,
   type CalibrationRow,
   type NextStep,
   type TopicSummary,
@@ -289,6 +291,7 @@ export function PersonalMap() {
 
           <Calibration rows={calibration(entries)} />
           <ByAiUse rows={byAiUse(entries)} />
+          <BotComments counts={botClaims(entries)} />
 
           <h3 className="mt-10 font-display text-2xl">Topics</h3>
           <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -435,6 +438,26 @@ function Calibration({ rows }: { rows: CalibrationRow[] }) {
         </tbody>
       </table>
       {sentence && <p className="mt-2 text-sm">{sentence}</p>}
+    </section>
+  );
+}
+
+function BotComments({ counts }: { counts: BotClaimCounts }) {
+  if (!counts.total) return null;
+  return (
+    <section aria-labelledby="bot-comments-heading" className="mt-10">
+      <h3 id="bot-comments-heading" className="font-display text-2xl">
+        Bot comments you checked
+      </h3>
+      <p className="mt-1 max-w-2xl text-sm text-muted">
+        Whether each bot comment&apos;s claim held when it was checked against the code. Catching a
+        wrong claim counts as understanding. If few hold, the bot deserves less of your attention.
+      </p>
+      <p className="mt-3 text-sm">
+        Of {counts.total}: <span className="text-pass">{counts.held} held</span>,{" "}
+        <span className="text-hold">{counts.partly} partly</span>,{" "}
+        <span className="text-fail">{counts.wrong} wrong</span>.
+      </p>
     </section>
   );
 }

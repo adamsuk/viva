@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  botClaims,
   byAiUse,
   calibration,
   calibrationSentence,
@@ -157,7 +158,7 @@ test("calibration counts confidence against grade, without disputed or unreadabl
 
 test("schema 0.4 adds how the change was made, and 0.3 lines still parse", async () => {
   const { CURRENT_LOG_SCHEMA, schemaFor } = await import("./log-schemas.ts");
-  assert.equal(CURRENT_LOG_SCHEMA.version, "0.4.0");
+  assert.equal(CURRENT_LOG_SCHEMA.version, "0.5.0");
   assert.equal(schemaFor("0.4.2")?.version, "0.4.0");
   assert.equal(schemaFor("0.3.3")?.version, "0.3.1");
   const log = [
@@ -221,4 +222,27 @@ test("a missed topic is due a re-check after seven days, not before", () => {
     true,
   );
   assert.equal(summariseTopics(parseVivaLog(missed))[0].recheck, false);
+});
+
+test("schema 0.5.0 reads botClaim; older lines and other values read as n/a", async () => {
+  const { schemaFor } = await import("./log-schemas.ts");
+  assert.equal(schemaFor("0.5.0")?.version, "0.5.0");
+  assert.equal(schemaFor("0.5.3")?.version, "0.5.0");
+  assert.equal(schemaFor("0.4.4")?.version, "0.4.0");
+  const log = [
+    "2026-11-21 10:00 | 0.5.0 | r | pr-1 | a | retry claim | 4 | understood | review-comment | live | unknown | wrong",
+    "2026-11-21 11:00 | 0.5.0 | r | pr-1 | a | cache claim | 3 | partial | review-comment | live | unknown | Held",
+    "2026-11-21 12:00 | 0.5.0 | r | pr-1 | a | lock claim | 2 | missed | review-comment | live | unknown | partly",
+    "2026-11-21 13:00 | 0.5.0 | r | pr-1 | a | own change | 4 | understood | session | live | hand | n/a",
+    "2026-11-21 14:00 | 0.5.0 | r | pr-1 | a | odd claim | 4 | understood | review-comment | live | unknown | maybe",
+    "2026-11-21 15:00 | 0.5.0 | r | pr-1 | a | bad question | 4 | disputed | review-comment | live | unknown | wrong",
+    "2026-11-21 16:00 | 0.4.2 | r | pr-1 | a | old claim | 4 | understood | review-comment | live | unknown",
+  ].join("\n");
+  const entries = parseVivaLog(log);
+  assert.deepEqual(
+    entries.map((e) => e.botClaim),
+    ["wrong", "held", "partly", "n/a", "n/a", "wrong", "n/a"],
+  );
+  assert.deepEqual(botClaims(entries), { held: 1, partly: 1, wrong: 1, total: 3 });
+  assert.deepEqual(botClaims([]), { held: 0, partly: 0, wrong: 0, total: 0 });
 });
