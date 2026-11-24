@@ -208,6 +208,42 @@ export function calibrationSentence(rows: CalibrationRow[]): string | null {
     : base;
 }
 
+/**
+ * A short markdown summary of the counted checks, for pasting into an experiment log. Counts only:
+ * no repository, branch, commit or topic names, so it is safe to share.
+ */
+export function summaryMarkdown(entries: VivaEntry[]): string {
+  const counted = entries.filter((e) => {
+    const k = gradeKind(e.grade);
+    return k === "understood" || k === "partial" || k === "missed";
+  });
+  if (!counted.length) return "No counted checks yet.";
+  const dates = counted.map((e) => e.timestamp.trim().slice(0, 10)).sort();
+  const n = (k: GradeKind) => counted.filter((e) => gradeKind(e.grade) === k).length;
+  const disputed = entries.filter((e) => gradeKind(e.grade) === "disputed").length;
+  const topics = new Set(counted.map((e) => topicKey(e.topic))).size;
+  const lines = [
+    `Viva summary, ${dates[0]} to ${dates[dates.length - 1]}: ${counted.length} check${counted.length === 1 ? "" : "s"} across ${topics} topic${topics === 1 ? "" : "s"}.`,
+    `Understood ${n("understood")}, partial ${n("partial")}, missed ${n("missed")}${disputed ? `; ${disputed} disputed, left out` : ""}.`,
+    "",
+    "| Confidence | Understood | Partial | Missed |",
+    "|---|---|---|---|",
+    ...calibration(counted)
+      .filter((r) => r.total > 0)
+      .map((r) => `| ${r.bucket} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+  ];
+  const aiRows = byAiUse(counted);
+  if (aiRows.some((r) => r.aiUse !== "unknown")) {
+    lines.push(
+      "",
+      "| How the change was made | Understood | Partial | Missed |",
+      "|---|---|---|---|",
+      ...aiRows.map((r) => `| ${r.aiUse} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+    );
+  }
+  return lines.join("\n");
+}
+
 export function groupByTopic(entries: VivaEntry[]): Map<string, VivaEntry[]> {
   const map = new Map<string, VivaEntry[]>();
   for (const e of entries) {

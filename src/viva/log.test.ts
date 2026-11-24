@@ -12,6 +12,7 @@ import {
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
+  summaryMarkdown,
   SAMPLE_LOG,
 } from "./log.ts";
 
@@ -221,4 +222,29 @@ test("a missed topic is due a re-check after seven days, not before", () => {
     true,
   );
   assert.equal(summariseTopics(parseVivaLog(missed))[0].recheck, false);
+});
+
+test("summaryMarkdown gives counts only, leaving out disputed checks", () => {
+  const log = [
+    "2026-11-02 10:00 | 0.4.3 | secret/repo | pr-9 | abc | Webhook retry | 5 | understood | session | live | hand",
+    "2026-11-01 10:00 | 0.4.3 | secret/repo | pr-9 | abc | webhook  retry | 2 | missed | session | live | delegated",
+    "2026-11-03 10:00 | 0.4.3 | secret/repo | pr-9 | abc | cache key | 3 | partial | session | live | agent",
+    "2026-11-04 10:00 | 0.4.3 | secret/repo | pr-9 | abc | cache key | 5 | disputed | session | live | hand",
+  ].join("\n");
+  const md = summaryMarkdown(parseVivaLog(log));
+  assert.match(md, /2026-11-01 to 2026-11-03: 3 checks across 2 topics\./);
+  assert.match(md, /Understood 1, partial 1, missed 1; 1 disputed, left out\./);
+  assert.match(md, /\| high \| 1 \| 0 \| 0 \|/);
+  assert.match(md, /\| low \| 0 \| 0 \| 1 \|/);
+  assert.match(md, /\| delegated \| 0 \| 0 \| 1 \|/);
+  for (const secret of ["secret/repo", "pr-9", "abc", "ebhook", "cache key"])
+    assert.ok(!md.includes(secret), `leaked ${secret}`);
+});
+
+test("summaryMarkdown handles an empty log and logs with no ai-use", () => {
+  assert.equal(summaryMarkdown([]), "No counted checks yet.");
+  const old = "2026-11-01 10:00 | 0.3.3 | o/r | pr-1 | abc | t | 4 | understood | session | live";
+  const md = summaryMarkdown(parseVivaLog(old));
+  assert.match(md, /: 1 check across 1 topic\./);
+  assert.ok(!md.includes("How the change was made"));
 });

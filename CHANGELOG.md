@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-24
+
+### Added
+
+- Copy summary on the personal map: a short markdown summary of your checks (date range, counts, the confidence table and, when recorded, grades by how the change was made) is copied to the clipboard, ready to paste into an experiment log. It holds counts only: no repositories, branches, commits or topics. Why: the experiments in EXPERIMENTS.md need exactly these numbers, `evaluate-it` is the open ground nobody has published results for, and retyping numbers from the map was the only way to get them out ([adamsuk/software-factory#490](https://github.com/adamsuk/software-factory/issues/490), [#14](https://github.com/adamsuk/viva/pull/14)).
+
 ## 2026-11-23
 
 ### Added
