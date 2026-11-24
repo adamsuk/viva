@@ -14,6 +14,7 @@ import {
   parseVivaLog,
   parseVivaLogDetailed,
   summariseTopics,
+  summaryMarkdown,
   type AiUseRow,
   type CalibrationRow,
   type NextStep,
@@ -50,6 +51,7 @@ export function PersonalMap() {
   const [mode, setMode] = useState<Mode>("add");
   const [error, setError] = useState<string | null>(null);
   const [sample, setSample] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const usedSample = sample !== null;
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export function PersonalMap() {
       return;
     }
     setError(null);
+    setCopied(null);
     if (sample) {
       // The sample is for trying the map. It is shown, never kept.
       setSample(raw);
@@ -86,6 +89,7 @@ export function PersonalMap() {
     setText("");
     setSample(null);
     setError(null);
+    setCopied(null);
     setStorageOk(writeStored(""));
   }
 
@@ -97,6 +101,18 @@ export function PersonalMap() {
     a.download = "viva-log.md";
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function copySummary() {
+    setCopied(null);
+    try {
+      await navigator.clipboard.writeText(summaryMarkdown(entries));
+      setCopied("Copied. Counts only: no repositories, branches or topics.");
+    } catch {
+      setCopied(
+        "This browser blocked the clipboard. Download the log and run viva-assess instead.",
+      );
+    }
   }
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -250,12 +266,24 @@ export function PersonalMap() {
               </button>
               <button
                 type="button"
+                onClick={copySummary}
+                className="min-h-11 rounded-2xl border border-line px-4 text-sm"
+              >
+                Copy summary
+              </button>
+              <button
+                type="button"
                 onClick={forget}
                 className="min-h-11 rounded-2xl border border-margin px-4 text-sm text-margin"
               >
                 Forget this log
               </button>
             </div>
+          )}
+          {!usedSample && copied && (
+            <p role="status" className="mt-2 text-sm text-muted">
+              {copied}
+            </p>
           )}
 
           {thin.length > 0 && (
