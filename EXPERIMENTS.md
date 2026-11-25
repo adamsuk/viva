@@ -18,7 +18,7 @@
 
 | # | Experiment | Status | Result |
 |---|---|---|---|
-| 1 | For 20 of my own merged PRs, generate one scenario question each. Rate how often I had to think rather than recall. Run it with `/viva practice` (viva skill 0.6.2+); viva-assess summarises the ratings. | Planned |  |
+| 1 | For 20 of my own merged PRs, generate one scenario question each. Rate how often I had to think rather than recall. Run it with “/viva practice” (viva skill 0.6.2+); viva-assess summarises the ratings. | Planned |  |
 | 2 | Answer the same 20 with and without an AI open. Compare. | Planned |  |
 | 3 | Compare answers with and without a confidence rating. Does confidence separate guesses from knowledge? | Planned |  |
 | 4 | Run on a small team, private output only, for two weeks. Ask what felt useful or intrusive. | Planned |  |
