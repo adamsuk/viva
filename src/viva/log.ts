@@ -422,7 +422,9 @@ const pct = (rate: number) => Math.round(100 * rate);
  * note is a nudge.
  */
 export function driftNote(entries: VivaEntry[]): string | null {
+  // Practice checks are old PRs, not recent work, so they say nothing about drift.
   const dated = counted(entries)
+    .filter((e) => e.scope.trim().toLowerCase() !== "practice")
     .map((e, i) => ({ e, i, at: checkTime(e.timestamp) }))
     .filter((x) => Number.isFinite(x.at) && weekOf(x.e.timestamp) !== null)
     .sort((a, b) => a.at - b.at || a.i - b.i)

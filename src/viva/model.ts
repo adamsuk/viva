@@ -2234,7 +2234,7 @@ export const EXPERIMENTS: { id: number; text: string; status: ExperimentStatus; 
   [
     {
       id: 1,
-      text: "For 20 of my own merged PRs, generate one scenario question each. Rate how often I had to think rather than recall. Run it with `/viva practice` (viva skill 0.6.2+); viva-assess summarises the ratings.",
+      text: "For 20 of my own merged PRs, generate one scenario question each. Rate how often I had to think rather than recall. Run it with "/viva practice" (viva skill 0.6.2+); viva-assess summarises the ratings.",
       status: "Planned",
       result: "",
     },
