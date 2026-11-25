@@ -563,7 +563,14 @@ function BotComments({ counts, trend }: { counts: BotClaimCounts; trend: BotWeek
                     </th>
                     {trend.bots.map((b) => (
                       <td key={b} className="py-1 pr-2">
-                        {w.cells[b] ? `${w.cells[b].held} / ${w.cells[b].total}` : "–"}
+                        {Object.hasOwn(w.cells, b) ? (
+                          `${w.cells[b].held} / ${w.cells[b].total}`
+                        ) : (
+                          <>
+                            <span aria-hidden="true">–</span>
+                            <span className="sr-only">no checks</span>
+                          </>
+                        )}
                       </td>
                     ))}
                   </tr>

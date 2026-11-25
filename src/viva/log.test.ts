@@ -616,17 +616,45 @@ test("botTrend counts each bot's verdicts week by week, leaving out disputed and
   ].join("\n");
   const trend = botTrend(parseVivaLog(log));
   assert.deepEqual(trend.bots, ["coderabbit", "copilot"]);
-  assert.deepEqual(trend.weeks, [
-    {
-      week: "2026-11-02",
-      cells: {
-        coderabbit: { held: 1, partly: 0, wrong: 1, total: 2 },
-        copilot: { held: 1, partly: 0, wrong: 0, total: 1 },
+  assert.deepEqual(
+    trend.weeks.map((w) => ({ week: w.week, cells: { ...w.cells } })),
+    [
+      {
+        week: "2026-11-02",
+        cells: {
+          coderabbit: { held: 1, partly: 0, wrong: 1, total: 2 },
+          copilot: { held: 1, partly: 0, wrong: 0, total: 1 },
+        },
       },
-    },
-    { week: "2026-11-09", cells: { coderabbit: { held: 0, partly: 0, wrong: 1, total: 1 } } },
-  ]);
+      { week: "2026-11-09", cells: { coderabbit: { held: 0, partly: 0, wrong: 1, total: 1 } } },
+    ],
+  );
   assert.equal(hasBotTrend(trend), true);
   assert.equal(hasBotTrend(botTrend(parseVivaLog(rc("2026-11-02", "held", "copilot")))), false);
   assert.deepEqual(botTrend([]), { bots: [], weeks: [] });
+});
+
+test("botTrend columns come from the weeks shown, and any bot name is safe", () => {
+  const rc = (d: string, claim: string, bot: string) =>
+    `${d} 10:00 | 0.6.0 | r | pr-1 | a | t-${d}-${bot}-${claim} | 4 | understood | review-comment | live | unknown | ${claim} | ${bot}`;
+  const old = ["held", "held", "wrong", "held", "partly"].map((c) => rc("2026-01-05", c, "oldbot"));
+  const recent = Array.from({ length: 9 }, (_, i) => {
+    const d = new Date(Date.UTC(2026, 8, 7 + 7 * i)).toISOString().slice(0, 10);
+    return rc(d, "held", "copilot");
+  });
+  const trend = botTrend(parseVivaLog([...old, ...recent].join("\n")));
+  assert.deepEqual(trend.bots, ["copilot"]);
+  assert.equal(trend.weeks.length, 8);
+
+  const tricky = botTrend(
+    parseVivaLog(
+      [rc("2026-11-02", "held", "constructor"), rc("2026-11-09", "held", "copilot")].join("\n"),
+    ),
+  );
+  assert.equal((Object as unknown as { held?: number }).held, undefined, "Object untouched");
+  assert.deepEqual(
+    { ...tricky.weeks[0].cells.constructor },
+    { held: 1, partly: 0, wrong: 0, total: 1 },
+  );
+  assert.equal(hasBotTrend(tricky), false);
 });
