@@ -95,7 +95,7 @@ YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-t
 
 `bot-claim` is one of `held`, `partly`, `wrong`, or `n/a` (every other scope). Older lines read as `n/a`. Why this field: the guide recommends tracking how often bot comments hold up, because a bot nobody listens to trains people to ignore it. The map counts the verdicts once any line records one.
 
-`grade` can also be `disputed` (the user disputed the question and the agent agreed it was faulty); the map leaves disputed checks out of its signals. `scope` can also be `review-comment` (a check on a bot review comment before forwarding it) or `review` (a check before approving someone else's PR).
+`grade` can also be `disputed` (the user disputed the question and the agent agreed it was faulty); the map leaves disputed checks out of its signals. `scope` can also be `review-comment` (a check on a bot review comment before forwarding it), `review` (a check before approving someone else's PR), or `practice` (a check on one of the user's own past merged PRs, from `/viva practice`).
 
 Schema 0.6.0, written by skill versions 0.6.x, adds a 13th field, `bot`: for a `review-comment` check, the bot that made the comment, as a short lowercase name such as `coderabbit` or `copilot` (letters, digits and hyphens). Every other scope writes `n/a`. Older review-comment lines read as `unknown`. The map breaks the bot-comment counts down per bot once more than one appears, because the guide recommends tracking each bot and re-testing it when its model changes.
 

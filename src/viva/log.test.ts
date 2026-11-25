@@ -585,3 +585,17 @@ test("driftNote needs three recorded checks on each side before comparing hand-o
   log[1] = log[1].replace("| hand", "| unknown");
   assert.equal(driftNote(parseVivaLog(log.join("\n"))), null, "only 2 recorded before");
 });
+
+test("driftNote leaves out practice checks on old PRs", () => {
+  const live = Array.from(
+    { length: 10 },
+    (_, i) =>
+      `2026-10-${String(i + 1).padStart(2, "0")} 10:00 | 0.6.2 | r | m | a | t | 4 | understood | session | live | hand | n/a | n/a`,
+  );
+  const practice = Array.from(
+    { length: 5 },
+    (_, i) =>
+      `2026-10-2${i} 10:00 | 0.6.2 | r | pr-${i + 1} | a | t | 4 | missed | practice | live | hand | n/a | n/a`,
+  );
+  assert.equal(driftNote(parseVivaLog([...live, ...practice].join("\n"))), null);
+});
