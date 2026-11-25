@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   botClaims,
+  botTrend,
+  hasBotTrend,
   byAiUse,
   byWeek,
   driftNote,
@@ -598,4 +600,33 @@ test("driftNote leaves out practice checks on old PRs", () => {
       `2026-10-2${i} 10:00 | 0.6.2 | r | pr-${i + 1} | a | t | 4 | missed | practice | live | hand | n/a | n/a`,
   );
   assert.equal(driftNote(parseVivaLog([...live, ...practice].join("\n"))), null);
+});
+
+test("botTrend counts each bot's verdicts week by week, leaving out disputed and impossible dates", () => {
+  const rc = (d: string, claim: string, bot: string, grade = "understood") =>
+    `${d} 10:00 | 0.6.0 | r | pr-1 | a | t-${d}-${bot} | 4 | ${grade} | review-comment | live | unknown | ${claim} | ${bot}`;
+  const log = [
+    rc("2026-11-02", "held", "coderabbit"),
+    rc("2026-11-03", "wrong", "coderabbit"),
+    rc("2026-11-04", "held", "copilot"),
+    rc("2026-11-10", "wrong", "coderabbit"),
+    rc("2026-11-11", "wrong", "coderabbit", "disputed"),
+    rc("2026-02-30", "held", "coderabbit"),
+    "2026-11-12 10:00 | 0.6.0 | r | pr-1 | a | own | 4 | understood | session | live | hand | n/a | n/a",
+  ].join("\n");
+  const trend = botTrend(parseVivaLog(log));
+  assert.deepEqual(trend.bots, ["coderabbit", "copilot"]);
+  assert.deepEqual(trend.weeks, [
+    {
+      week: "2026-11-02",
+      cells: {
+        coderabbit: { held: 1, partly: 0, wrong: 1, total: 2 },
+        copilot: { held: 1, partly: 0, wrong: 0, total: 1 },
+      },
+    },
+    { week: "2026-11-09", cells: { coderabbit: { held: 0, partly: 0, wrong: 1, total: 1 } } },
+  ]);
+  assert.equal(hasBotTrend(trend), true);
+  assert.equal(hasBotTrend(botTrend(parseVivaLog(rc("2026-11-02", "held", "copilot")))), false);
+  assert.deepEqual(botTrend([]), { bots: [], weeks: [] });
 });

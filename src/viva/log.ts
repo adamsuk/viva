@@ -406,6 +406,56 @@ export function byWeek(entries: VivaEntry[], limit = 8): WeekRow[] {
     .slice(-limit);
 }
 
+export interface BotWeekCell {
+  held: number;
+  partly: number;
+  wrong: number;
+  total: number;
+}
+
+export interface BotWeekTrend {
+  /** Bots that have verdicts, most-checked first. */
+  bots: string[];
+  /** Latest weeks with any verdict, oldest first; each maps bot to its counts that week. */
+  weeks: { week: string; cells: Record<string, BotWeekCell> }[];
+}
+
+/**
+ * How each bot's checked review comments fared, week by week: review-comment checks with a verdict,
+ * leaving out disputed checks and impossible dates. A change after a bot's model update is the
+ * signal the guide's track-acceptance recommendation asks for.
+ */
+export function botTrend(entries: VivaEntry[], limit = 8): BotWeekTrend {
+  const byWeekMap = new Map<string, Record<string, BotWeekCell>>();
+  const totals = new Map<string, number>();
+  for (const e of entries) {
+    if (e.scope.trim().toLowerCase() !== "review-comment" || e.botClaim === "n/a") continue;
+    if (gradeKind(e.grade) === "disputed") continue;
+    const week = weekOf(e.timestamp);
+    if (!week) continue;
+    const cells = byWeekMap.get(week) ?? {};
+    const cell = cells[e.bot] ?? { held: 0, partly: 0, wrong: 0, total: 0 };
+    cell[e.botClaim]++;
+    cell.total++;
+    cells[e.bot] = cell;
+    byWeekMap.set(week, cells);
+    totals.set(e.bot, (totals.get(e.bot) ?? 0) + 1);
+  }
+  const bots = Array.from(totals.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([bot]) => bot);
+  const weeks = Array.from(byWeekMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-limit)
+    .map(([week, cells]) => ({ week, cells }));
+  return { bots, weeks };
+}
+
+/** True when some bot has verdicts in two or more of the shown weeks. */
+export function hasBotTrend(trend: BotWeekTrend): boolean {
+  return trend.bots.some((b) => trend.weeks.filter((w) => w.cells[b]).length >= 2);
+}
+
 export const DRIFT_MIN_CHECKS = 10;
 export const DRIFT_RECENT = 5;
 /** Fewest checks recording ai-use, on each side, before comparing how often work was handed off. */
