@@ -36,3 +36,11 @@ test("the Skills page says the bot verdict is kept and viva-assess reports how t
   assert.match(text("viva"), /claim held, and which bot/i);
   assert.match(text("viva-assess"), /bot/i);
 });
+
+test("the Skills page offers the before-you-post step: own description and disclosure", () => {
+  const viva = SKILLS.find((s) => s.name === "viva")!;
+  const card = viva.features.find((f) => f.name === "Before you post");
+  assert.ok(card);
+  assert.match(card.text, /own words/);
+  assert.match(card.text, /Assisted-by/);
+});

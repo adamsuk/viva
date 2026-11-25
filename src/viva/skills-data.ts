@@ -39,6 +39,10 @@ export const SKILLS: SkillInfo[] = [
         text: "When your log shows a topic you missed a week or more ago and the change touches it, the question is a re-check on that area.",
       },
       {
+        name: "Before you post",
+        text: "Optionally helps you write the PR description in your own words (why, what, and the decision you’re least sure of) and suggests an Assisted-by trailer from how the change was made. Nothing is posted or committed without you.",
+      },
+      {
         name: "How the change was made",
         text: "It records whether you wrote the change by hand, asked AI why, generated then understood it, delegated it, or an agent built it, so the map can show whether that tracks your understanding.",
       },
