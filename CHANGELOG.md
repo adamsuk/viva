@@ -6,6 +6,10 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ## 2026-11-25
 
+### Added
+
+- The personal map's Bot comments you checked section has a Week by week table: how many of each bot's checked comments held, per week, for the latest 8 weeks. It appears once any bot has verdicts in two or more weeks. Disputed checks and impossible dates are left out, and the log is unchanged. Why: the guide's `track-acceptance` recommends re-testing a bot when its model changes, and totals alone can't show a bot getting better or worse ([adamsuk/software-factory#500](https://github.com/adamsuk/software-factory/issues/500), [#24](https://github.com/adamsuk/viva/pull/24)).
+
 ### Changed
 
 - The Skills page lists `viva` 0.6.1's Before you post step: help writing the PR description in your own words, and an `Assisted-by` trailer from how the change was made. Why: the Skills page is where people find out what the skills do, and this step supports the guide's `own-description` and `disclose` recommendations ([adamsuk/software-factory#495](https://github.com/adamsuk/software-factory/issues/495), [#21](https://github.com/adamsuk/viva/pull/21)).

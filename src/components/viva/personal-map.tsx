@@ -3,6 +3,8 @@ import { RECOMMENDATIONS } from "@/viva/model";
 import {
   LOG_STORAGE_KEY,
   botClaims,
+  botTrend,
+  hasBotTrend,
   byAiUse,
   byWeek,
   calibration,
@@ -18,6 +20,7 @@ import {
   summaryMarkdown,
   type AiUseRow,
   type BotClaimCounts,
+  type BotWeekTrend,
   type CalibrationRow,
   type NextStep,
   type TopicSummary,
@@ -340,7 +343,7 @@ export function PersonalMap() {
 
           <Calibration rows={calibration(entries)} />
           <ByAiUse rows={byAiUse(entries)} />
-          <BotComments counts={botClaims(entries)} />
+          <BotComments counts={botClaims(entries)} trend={botTrend(entries)} />
           <OverTime rows={byWeek(entries)} drift={driftNote(entries)} />
 
           <h3 className="mt-10 font-display text-2xl">Topics</h3>
@@ -492,7 +495,7 @@ function Calibration({ rows }: { rows: CalibrationRow[] }) {
   );
 }
 
-function BotComments({ counts }: { counts: BotClaimCounts }) {
+function BotComments({ counts, trend }: { counts: BotClaimCounts; trend: BotWeekTrend }) {
   if (!counts.total) return null;
   return (
     <section aria-labelledby="bot-comments-heading" className="mt-10">
@@ -531,6 +534,51 @@ function BotComments({ counts }: { counts: BotClaimCounts }) {
             ))}
           </tbody>
         </table>
+      )}
+      {hasBotTrend(trend) && (
+        <>
+          <h4 className="mt-4 font-mono text-xs uppercase tracking-wider text-faint">
+            Week by week (held / checked)
+          </h4>
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            A bot that changes after a model update is the one to re-check before you trust it.
+          </p>
+          <div className="mt-2 max-w-xl overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-line font-mono text-xs uppercase tracking-wider text-faint">
+                  <th className="py-1 pr-2 font-normal">Week of</th>
+                  {trend.bots.map((b) => (
+                    <th key={b} className="py-1 pr-2 font-normal">
+                      {b === "unknown" ? "Unknown" : b}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {trend.weeks.map((w) => (
+                  <tr key={w.week} className="border-b border-line">
+                    <th scope="row" className="py-1 pr-2 font-medium">
+                      {w.week}
+                    </th>
+                    {trend.bots.map((b) => (
+                      <td key={b} className="py-1 pr-2">
+                        {Object.hasOwn(w.cells, b) ? (
+                          `${w.cells[b].held} / ${w.cells[b].total}`
+                        ) : (
+                          <>
+                            <span aria-hidden="true">–</span>
+                            <span className="sr-only">no checks</span>
+                          </>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   );
