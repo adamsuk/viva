@@ -8,7 +8,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ### Changed
 
-- The Skills page lists `viva` 0.6.1's Before you post step: help writing the PR description in your own words, and an `Assisted-by` trailer from how the change was made ([adamsuk/software-factory#495](https://github.com/adamsuk/software-factory/issues/495), [#21](https://github.com/adamsuk/viva/pull/21)).
+- The Skills page lists `viva` 0.6.1's Before you post step: help writing the PR description in your own words, and an `Assisted-by` trailer from how the change was made. Why: the Skills page is where people find out what the skills do, and this step supports the guide's `own-description` and `disclose` recommendations ([adamsuk/software-factory#495](https://github.com/adamsuk/software-factory/issues/495), [#21](https://github.com/adamsuk/viva/pull/21)).
 
 ## 2026-11-24
 
