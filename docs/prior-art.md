@@ -14,7 +14,7 @@ Checked 30 October 2026. Not an endorsement.
 | [Moodle certainty-based marking](https://docs.moodle.org/501/en/Using_certainty-based_marking) | A quiz mode that asks for certainty with each answer and penalises confident wrong answers. | Higher reliability in UCL medical exams. Built for courses, not PRs. | `ask-confidence` Partial |
 | [validate-pr skill](https://www.skills.sh/arraydude/agent-skills/validate-pr) | An agent skill that checks bot review comments against the diff for hallucinations. | None published. | `bot-comments-are-claims` Partial |
 | [CodeRabbit dashboard](https://docs.coderabbit.ai/guides/dashboard) | Review bot analytics, including how comments were received. | Vendor feature. | `track-acceptance` Partial |
-| [Assisted-by trailer](https://docs.kernel.org/process/coding-assistants.html) | A commit trailer naming the AI tool used. Asked for by LLVM and the Linux kernel. | A convention, not a tool. | `disclose` Full |
+| [Assisted-by trailer](https://llvm.org/docs/AIToolPolicy.html) | A commit trailer naming the AI tool used, suggested by LLVM's AI tool policy. The Linux kernel asks for the same transparency in the changelog instead of a tag. | A convention, not a tool. | `disclose` Full |
 
 ## Gaps
 
