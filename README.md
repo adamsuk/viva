@@ -1,6 +1,6 @@
 # Viva
 
-Research notes and a guide on AI in code review, its effect on juniors and seniors, and checking that people understand what they post and merge. You can walk it. One AI-assisted pull request, #212, moves through eight stations. Last checked 30 October 2026.
+If you post it or merge it, you can defend it. Viva is two agent skills, `viva` and `viva-assess`, that ask one small question after an AI-assisted change, a private map of the answers that stays on your machine, and research notes and a guide on AI in code review. Last checked 30 October 2026.
 
 The working idea: if you post it or merge it, you can defend it. One small question after an AI-assisted PR or review comment checks understanding. Many such answers build a private picture of where someone's understanding is solid or thin.
 
