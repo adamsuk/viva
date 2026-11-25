@@ -1312,9 +1312,9 @@ export const FURTHER_READING: { heading: string; refs: Reference[] }[] = [
         title: "AI Coding Assistants",
         author: "The Linux kernel community",
         publication: "docs.kernel.org",
-        date: "Checked 30 October 2026",
+        date: "Checked 25 November 2026",
         url: "https://docs.kernel.org/process/coding-assistants.html",
-        took: "AI agents must not add Signed-off-by. The human submitter reviews all AI-generated code and takes full responsibility. Contributions carry an Assisted-by tag.",
+        took: "AI agents must not add Signed-off-by. The human submitter reviews all AI-generated code and takes full responsibility. Its linked guidelines for tool-generated content ask contributors to be transparent about where content came from in cover letters and changelogs; the page no longer names an Assisted-by tag.",
       },
       {
         id: "gnome-review",
@@ -2182,8 +2182,8 @@ export const TOOLS: Tool[] = [
   },
   {
     name: "Assisted-by trailer",
-    url: "https://docs.kernel.org/process/coding-assistants.html",
-    what: "A commit trailer naming the AI tool used. Asked for by LLVM and the Linux kernel.",
+    url: "https://llvm.org/docs/AIToolPolicy.html",
+    what: "A commit trailer naming the AI tool used, suggested by LLVM's AI tool policy. The Linux kernel asks for the same transparency in the changelog instead of a tag.",
     evidence: "A convention, not a tool.",
     fits: [{ rec: "disclose", fit: "Full", note: "Plain git, no setup." }],
   },
