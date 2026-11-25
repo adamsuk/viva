@@ -43,6 +43,10 @@ export const SKILLS: SkillInfo[] = [
         text: "Optionally helps you write the PR description in your own words (why, what, and the decision you’re least sure of) and suggests an Assisted-by trailer from how the change was made. Nothing is posted or committed without you.",
       },
       {
+        name: "Practice mode",
+        text: "Say /viva practice to work through your own past merged PRs, one question each, and note whether you had to think or just recalled. That rating stays in a separate file on your device, for Viva’s experiment 1.",
+      },
+      {
         name: "How the change was made",
         text: "It records whether you wrote the change by hand, asked AI why, generated then understood it, delegated it, or an agent built it, so the map can show whether that tracks your understanding.",
       },

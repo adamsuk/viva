@@ -44,3 +44,11 @@ test("the Skills page offers the before-you-post step: own description and discl
   assert.match(card.text, /own words/);
   assert.match(card.text, /Assisted-by/);
 });
+
+test("the Skills page offers practice mode for experiment 1", () => {
+  const viva = SKILLS.find((s) => s.name === "viva")!;
+  const card = viva.features.find((f) => f.name === "Practice mode");
+  assert.ok(card);
+  assert.match(card.text, /\/viva practice/);
+  assert.match(card.text, /experiment 1/);
+});
