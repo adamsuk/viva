@@ -8,7 +8,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ### Changed
 
-- CodeRabbit auto-reviews only `size/L` and `size/XL` PRs, the same `.coderabbit.yaml` Line uses. Smaller PRs get the independent review alone, as the factory's shared rules (§10, rule 4) already say. Why: CodeRabbit reviewed every PR, so its free allowance of about one review an hour ran out on S and M PRs, and some L PRs got no review at all ([adamsuk/software-factory#479](https://github.com/adamsuk/software-factory/issues/479)).
+- CodeRabbit auto-reviews only `size/L` and `size/XL` PRs, the same `.coderabbit.yaml` Line uses. Smaller PRs get the independent review alone, as the factory's shared rules (§10, rule 4) already say. Why: CodeRabbit reviewed every PR, so its free allowance of about one review an hour ran out on S and M PRs, and some L PRs got no review at all ([adamsuk/software-factory#479](https://github.com/adamsuk/software-factory/issues/479), [#36](https://github.com/adamsuk/viva/pull/36)).
 
 ## 2026-11-25
 
