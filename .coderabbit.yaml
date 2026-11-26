@@ -1,6 +1,7 @@
-# factory-managed: maintained by https://github.com/adamsuk/gh-factory. Remove this line to take ownership.
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-# Review bot settings. Anything not set here falls back to the org or app settings (inheritance).
+# Owned by this repo (was factory-managed), as in adamsuk/line. Free-tier CodeRabbit
+# only auto-reviews size/L and size/XL; smaller PRs use the independent review
+# (software-factory AGENTS.md section 10, rule 4; adamsuk/software-factory#479).
 language: en-GB
 inheritance: true
 reviews:
@@ -8,8 +9,11 @@ reviews:
   high_level_summary: true
   poem: false
   auto_review:
-    enabled: true
+    enabled: false
     drafts: false
+    labels:
+      - size/L
+      - size/XL
   path_instructions:
     - path: "**"
       instructions: >-
