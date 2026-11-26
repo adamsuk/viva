@@ -47,6 +47,10 @@ export const SKILLS: SkillInfo[] = [
         text: "Say /viva practice to work through your own past merged PRs, one question each, and note whether you had to think or just recalled. That rating stays in a separate file on your device, for Viva’s experiment 1.",
       },
       {
+        name: "Reminder after commits",
+        text: "Opt-in: a git post-commit hook prints one line every few commits suggesting /viva on what you just committed. It never blocks a commit, logs nothing and never touches the network. Install it from the viva-skills repo with scripts/install-hook.sh; VIVA_REMIND=off silences it.",
+      },
+      {
         name: "How the change was made",
         text: "It records whether you wrote the change by hand, asked AI why, generated then understood it, delegated it, or an agent built it, so the map can show whether that tracks your understanding.",
       },
