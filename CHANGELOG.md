@@ -6,6 +6,10 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ## 2026-11-26
 
+### Added
+
+- Log schema 0.7.0 (skill 0.7.x) adds two fields, `style` and `risk`, for two opt-in options in the `viva` skill. `style` is `scenario` (the current question, and what every older line was) or `decision` (why the change took this approach, what must stay true, what breaks if it is wrong). `risk` is `low`, `normal` or `high` when the user turns risk tiers on, and `n/a` when they are off, which is the default. The copied summary on the personal map splits grades by style and by tier, but only once a log uses them. Experiment 8 and a new open question in EXPERIMENTS.md cover comparing them, and the Skills page lists them as "Options to compare". Why: both ideas are untested, like the scenario question itself, so they are offered beside the defaults and recorded, rather than replacing them. No new claim or recommendation is made ([#38](https://github.com/adamsuk/viva/pull/38)).
+
 ### Changed
 
 - Dependencies and pinned actions are updated in one change. Lint tooling moves to ESLint 10 (`eslint`, `@eslint/js`) and `eslint-plugin-react-hooks` 7 together. The two can't move separately: hooks 5 doesn't accept ESLint 10, and hooks 7's new `set-state-in-effect` rule flagged the personal map. The map now works out whether this browser can keep the log when it first renders, the same way it already reads the kept log, instead of in an effect afterwards. What it shows is unchanged, and a new component test checks the storage-blocked notice. Also updated: `@vitejs/plugin-react` 6, `globals` 17, `eslint-plugin-react-refresh` 0.5, `vite`, `@tailwindcss/vite`, `typescript-eslint`, `prettier` and `zustand` (minor and patch), CodeQL v4.39.4, and the size-label workflow pin. This changes `package-lock.json`. Why: Dependabot opened these as seven PRs (#26 to #32). Under the strict up-to-date rule each would need its own review after every merge. The ESLint and hooks bumps (#29, #30) also failed CI on their own ([#37](https://github.com/adamsuk/viva/pull/37)).

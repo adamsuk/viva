@@ -34,6 +34,20 @@ export const BOT_CLAIM_VALUES = ["held", "partly", "wrong", "n/a"] as const;
 
 export type BotClaim = (typeof BOT_CLAIM_VALUES)[number];
 
+/**
+ * Which kind of question was asked. scenario (the default): what happens for a concrete input.
+ * decision: why the change took this approach, what must stay true, and what breaks if it is wrong.
+ * An option to compare, not a recommendation: neither has evidence as a check on understanding.
+ */
+export const STYLE_VALUES = ["scenario", "decision"] as const;
+
+export type QuestionStyle = (typeof STYLE_VALUES)[number];
+
+/** The change's risk tier when the user turned risk tiers on; n/a when they are off (the default). */
+export const RISK_VALUES = ["low", "normal", "high", "n/a"] as const;
+
+export type RiskTier = (typeof RISK_VALUES)[number];
+
 const FIELDS_0_3: LogField[] = [
   { name: "timestamp", description: "YYYY-MM-DD HH:MM", example: "2026-11-20 17:25" },
   { name: "skillVersion", description: "Skill version that wrote the line", example: "0.3.1" },
@@ -74,6 +88,16 @@ const FIELDS_0_5: LogField[] = [
   },
 ];
 
+const FIELDS_0_6: LogField[] = [
+  ...FIELDS_0_5,
+  {
+    name: "bot",
+    description:
+      "For scope review-comment, the bot that made the comment: a short lowercase name such as coderabbit or copilot; n/a otherwise",
+    example: "n/a",
+  },
+];
+
 export const LOG_SCHEMAS: LogSchema[] = [
   {
     version: "0.3.1",
@@ -108,17 +132,31 @@ export const LOG_SCHEMAS: LogSchema[] = [
     description:
       "Viva skill log line (skill 0.6.x): the 0.5 fields plus which bot made a checked review comment",
     delimiter: " | ",
+    fields: FIELDS_0_6,
+    notes:
+      "One line per check. Version is always the second field so the parser can dispatch. bot: short lowercase name of the bot whose comment was checked (letters, digits, hyphens), for scope review-comment; n/a otherwise. botClaim and aiUse as in 0.5.0. Lines are never rewritten: to correct a check, append it again in the current format with every field copied except the skill version and the corrected grade or botClaim, filling fields the older line lacks with their defaults (aiUse unknown, botClaim n/a, bot unknown for review-comment or n/a); the last line for a timestamp, repo, branchOrPr, commitOrRef, topic and scope wins.",
+  },
+  {
+    version: "0.7.0",
+    skillVersions: "0.7.x",
+    description:
+      "Viva skill log line (skill 0.7.x): the 0.6 fields plus the question style and the change's risk tier",
+    delimiter: " | ",
     fields: [
-      ...FIELDS_0_5,
+      ...FIELDS_0_6,
       {
-        name: "bot",
-        description:
-          "For scope review-comment, the bot that made the comment: a short lowercase name such as coderabbit or copilot; n/a otherwise",
+        name: "style",
+        description: `Which kind of question was asked: ${STYLE_VALUES.join(" | ")}`,
+        example: "scenario",
+      },
+      {
+        name: "risk",
+        description: `The change's risk tier when risk tiers are on: ${RISK_VALUES.join(" | ")} (n/a when they are off)`,
         example: "n/a",
       },
     ],
     notes:
-      "One line per check. Version is always the second field so the parser can dispatch. bot: short lowercase name of the bot whose comment was checked (letters, digits, hyphens), for scope review-comment; n/a otherwise. botClaim and aiUse as in 0.5.0. Lines are never rewritten: to correct a check, append it again in the current format with every field copied except the skill version and the corrected grade or botClaim, filling fields the older line lacks with their defaults (aiUse unknown, botClaim n/a, bot unknown for review-comment or n/a); the last line for a timestamp, repo, branchOrPr, commitOrRef, topic and scope wins.",
+      "One line per check. Version is always the second field so the parser can dispatch. style: scenario (what happens for a concrete input; every line before 0.7 was one) or decision (why this approach, what must stay true, what breaks if it is wrong). risk: low, normal or high when the user turned risk tiers on, n/a when they are off. Both are opt-in options the skill records so they can be compared; neither is a recommendation. bot, botClaim and aiUse as in 0.6.0. Corrections as in 0.6.0, filling fields an older line lacks with their defaults (style scenario, risk n/a).",
   },
 ];
 
