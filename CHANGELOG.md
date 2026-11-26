@@ -6,6 +6,10 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ## 2026-11-26
 
+### Added
+
+- Log schema 0.7.0 (skill 0.7.x) adds two fields, `style` and `risk`, for two opt-in options in the `viva` skill. `style` is `scenario` (the current question, and what every older line was) or `decision` (why the change took this approach, what must stay true, what breaks if it is wrong). `risk` is `low`, `normal` or `high` when the user turns risk tiers on, and `n/a` when they are off, which is the default. The copied summary on the personal map splits grades by style and by tier, but only once a log uses them. Experiment 8 and a new open question in EXPERIMENTS.md cover comparing them, and the Skills page lists them as "Options to compare". Why: both ideas are untested, like the scenario question itself, so they are offered beside the defaults and recorded, rather than replacing them. No new claim or recommendation is made (PR link to follow).
+
 ### Changed
 
 - CodeRabbit auto-reviews only `size/L` and `size/XL` PRs, the same `.coderabbit.yaml` Line uses. Smaller PRs get the independent review alone, as the factory's shared rules (§10, rule 4) already say. Why: CodeRabbit reviewed every PR, so its free allowance of about one review an hour ran out on S and M PRs, and some L PRs got no review at all ([adamsuk/software-factory#479](https://github.com/adamsuk/software-factory/issues/479), [#36](https://github.com/adamsuk/viva/pull/36)).

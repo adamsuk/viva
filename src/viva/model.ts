@@ -2226,6 +2226,7 @@ export const OPEN_QUESTIONS = [
   "Does reading an agent's session help an approver understand the change, or is it too long to read?",
   "Is a short walkthrough harder to fake than a written question, and worth the reviewer's time?",
   "In a factory, does a topic view of what nobody can explain lead to better work orders?",
+  "Do decision questions (why this approach, what must stay true, what breaks) separate understanding from a model's answer better than scenario questions, and does asking only on riskier changes keep the signal while cutting the friction?",
 ];
 
 export type ExperimentStatus = "Planned" | "Running" | "Done";
@@ -2271,6 +2272,12 @@ export const EXPERIMENTS: { id: number; text: string; status: ExperimentStatus; 
     {
       id: 7,
       text: "Give approvers an agent PR with and without its session. Ask the same question after each. Does the session help?",
+      status: "Planned",
+      result: "",
+    },
+    {
+      id: 8,
+      text: "Turn on the viva skill's options (0.7.0+): decision questions, and risk tiers that skip low-risk changes and add an optional second question on high-risk ones. Run them beside the defaults for a few weeks. The log records which style and tier each check used, so the copied summary splits grades by both. Compare the grades, confidence and disputes, and note which questions a model could answer without the person.",
       status: "Planned",
       result: "",
     },

@@ -13,6 +13,7 @@
 7. Does reading an agent's session help an approver understand the change, or is it too long to read?
 8. Is a short walkthrough harder to fake than a written question, and worth the reviewer's time?
 9. In a factory, does a topic view of what nobody can explain lead to better work orders?
+10. Do decision questions (why this approach, what must stay true, what breaks) separate understanding from a model's answer better than scenario questions, and does asking only on riskier changes keep the signal while cutting the friction?
 
 ## Log
 
@@ -25,3 +26,4 @@
 | 5 | Ask reviewers who forward bot comments one question about each. How often can they defend it? | Planned |  |
 | 6 | On the same PRs, compare a written question with a five-minute walkthrough. Which one separates people who understood from people who did not, and at what cost? | Planned |  |
 | 7 | Give approvers an agent PR with and without its session. Ask the same question after each. Does the session help? | Planned |  |
+| 8 | Turn on the viva skill's options (0.7.0+): decision questions, and risk tiers that skip low-risk changes and add an optional second question on high-risk ones. Run them beside the defaults for a few weeks. The log records which style and tier each check used, so the copied summary splits grades by both. Compare the grades, confidence and disputes, and note which questions a model could answer without the person. | Planned |  |
