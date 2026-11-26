@@ -4,6 +4,12 @@ All notable changes to Viva are recorded here. The format follows [Keep a Change
 
 Research-driven entries say what changed, why, and which sources back it. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 2026-11-26
+
+### Changed
+
+- Lint tooling moves to ESLint 10 (`eslint`, `@eslint/js`) and `eslint-plugin-react-hooks` 7 together. The two can't move separately: hooks 5 doesn't accept ESLint 10, and hooks 7's new `set-state-in-effect` rule flagged the personal map. The map now works out whether this browser can keep the log when it first renders, the same way it already reads the kept log, instead of in an effect afterwards. What it shows is unchanged, and a new component test checks the storage-blocked notice. This changes `package-lock.json`. Why: Dependabot opened the two bumps as separate PRs (#29, #30), and both failed CI on their own.
+
 ## 2026-11-25
 
 ### Added
