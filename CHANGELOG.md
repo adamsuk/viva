@@ -8,7 +8,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ### Added
 
-- The Skills page lists the opt-in reminder after commits: a git post-commit hook from viva-skills (`scripts/install-hook.sh`) that prints one line every few commits suggesting `/viva`. It never blocks a commit, logs nothing and never touches the network, and `VIVA_REMIND=off` silences it. The scope table in `docs/mvp-platform.md` now lists it as shipped, not Later. Why: the hook has shipped in [viva-skills](https://github.com/adamsuk/viva-skills#readme) for a while, but the Skills page, where people find out what the skills do, never mentioned it.
+- The Skills page lists the opt-in reminder after commits: a git post-commit hook from viva-skills (`scripts/install-hook.sh`) that prints one line every few commits suggesting `/viva`. It never blocks a commit, logs nothing and never touches the network, and `VIVA_REMIND=off` silences it. The scope table in `docs/mvp-platform.md` now lists it as shipped, not Later. Why: the hook has shipped in [viva-skills](https://github.com/adamsuk/viva-skills#readme) for a while, but the Skills page, where people find out what the skills do, never mentioned it ([#35](https://github.com/adamsuk/viva/pull/35)).
 
 
 ### Added
