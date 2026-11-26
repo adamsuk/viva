@@ -47,6 +47,10 @@ export const SKILLS: SkillInfo[] = [
         text: "Say /viva practice to work through your own past merged PRs, one question each, and note whether you had to think or just recalled. That rating stays in a separate file on your device, for Viva’s experiment 1.",
       },
       {
+        name: "Options to compare",
+        text: "Off by default. Decision questions ask why the change took this approach, what must stay true, and what breaks if it is wrong. Risk tiers skip low-risk changes unless you ask, and offer a second question on high-risk ones. Neither has evidence behind it yet, so each check records which it used, for Viva’s experiment 8.",
+      },
+      {
         name: "How the change was made",
         text: "It records whether you wrote the change by hand, asked AI why, generated then understood it, delegated it, or an agent built it, so the map can show whether that tracks your understanding.",
       },

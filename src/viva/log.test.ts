@@ -19,6 +19,8 @@ import {
   parseVivaLogDetailed,
   summariseTopics,
   summaryMarkdown,
+  byStyle,
+  byRisk,
   SAMPLE_LOG,
 } from "./log.ts";
 
@@ -167,7 +169,7 @@ test("calibration counts confidence against grade, without disputed or unreadabl
 
 test("schema 0.4 adds how the change was made, and 0.3 lines still parse", async () => {
   const { CURRENT_LOG_SCHEMA, schemaFor } = await import("./log-schemas.ts");
-  assert.equal(CURRENT_LOG_SCHEMA.version, "0.6.0");
+  assert.equal(CURRENT_LOG_SCHEMA.version, "0.7.0");
   assert.equal(schemaFor("0.4.2")?.version, "0.4.0");
   assert.equal(schemaFor("0.3.3")?.version, "0.3.1");
   const log = [
@@ -657,4 +659,58 @@ test("botTrend columns come from the weeks shown, and any bot name is safe", () 
     { held: 1, partly: 0, wrong: 0, total: 1 },
   );
   assert.equal(hasBotTrend(tricky), false);
+});
+
+test("schema 0.7.0 records question style and risk tier; older lines default", async () => {
+  const { schemaFor } = await import("./log-schemas.ts");
+  assert.equal(schemaFor("0.7.1")?.version, "0.7.0");
+  assert.equal(schemaFor("0.6.4")?.version, "0.6.0");
+  const log = [
+    "2026-11-20 10:00 | 0.6.4 | r | pr-1 | a | t0 | 4 | understood | session | live | hand | n/a | n/a",
+    "2026-11-21 10:00 | 0.7.0 | r | pr-1 | a | t1 | 4 | understood | session | live | hand | n/a | n/a | scenario | n/a",
+    "2026-11-21 11:00 | 0.7.0 | r | pr-2 | a | t2 | 3 | partial | session | live | delegated | n/a | n/a | Decision | high",
+    "2026-11-21 12:00 | 0.7.0 | r | pr-2 | a | t3 | 4 | missed | session | live | delegated | n/a | n/a | decision | high",
+    "2026-11-21 13:00 | 0.7.0 | r | pr-3 | a | t4 | 2 | understood | session | live | hand | n/a | n/a | riddle | extreme",
+    "2026-11-21 14:00 | 0.7.0 | r | pr-4 | a | t5 | 5 | understood | session | live | hand | n/a | n/a | scenario | low",
+    "2026-11-21 15:00 | 0.7.0 | r | pr-4 | a | t6 | 5 | disputed | session | live | hand | n/a | n/a | decision | low",
+  ].join("\n");
+  const entries = parseVivaLog(log);
+  assert.deepEqual(
+    entries.map((e) => [e.style, e.risk]),
+    [
+      ["scenario", "n/a"],
+      ["scenario", "n/a"],
+      ["decision", "high"],
+      ["decision", "high"],
+      ["scenario", "n/a"],
+      ["scenario", "low"],
+      ["decision", "low"],
+    ],
+  );
+  assert.deepEqual(
+    byStyle(entries).map((r) => [r.key, r.understood, r.partial, r.missed]),
+    [
+      ["scenario", 4, 0, 0],
+      ["decision", 0, 1, 1],
+    ],
+  );
+  assert.deepEqual(
+    byRisk(entries).map((r) => [r.key, r.total]),
+    [
+      ["low", 1],
+      ["high", 2],
+    ],
+  );
+  const md = summaryMarkdown(entries);
+  assert.match(md, /\| Question style \|/);
+  assert.match(md, /\| decision \| 0 \| 1 \| 1 \|/);
+  assert.match(md, /\| high \| 0 \| 1 \| 1 \|/);
+});
+
+test("summaryMarkdown shows no style or risk tables when the options were never used", () => {
+  const log =
+    "2026-11-21 10:00 | 0.7.0 | r | pr-1 | a | t1 | 4 | understood | session | live | hand | n/a | n/a | scenario | n/a";
+  const md = summaryMarkdown(parseVivaLog(log));
+  assert.ok(!md.includes("Question style"));
+  assert.ok(!md.includes("Risk tier"));
 });
