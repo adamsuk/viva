@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { RECOMMENDATIONS } from "@/viva/model";
 import {
   LOG_STORAGE_KEY,
@@ -52,17 +52,13 @@ export function PersonalMap() {
   const inputGeneration = useRef(0);
   const [text, setText] = useState("");
   const [log, setLog] = useState(() => (typeof window === "undefined" ? "" : readStored().text));
-  const [storageOk, setStorageOk] = useState(true);
+  const [storageOk, setStorageOk] = useState(() => typeof window === "undefined" || readStored().ok);
   const [mode, setMode] = useState<Mode>("add");
   const [error, setError] = useState<string | null>(null);
   const [sample, setSample] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [fallback, setFallback] = useState<string | null>(null);
   const usedSample = sample !== null;
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && !readStored().ok) setStorageOk(false);
-  }, []);
 
   const { entries, skipped, unknownVersion, superseded } = parseVivaLogDetailed(sample ?? log);
 

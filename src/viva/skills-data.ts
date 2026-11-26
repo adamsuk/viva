@@ -51,6 +51,10 @@ export const SKILLS: SkillInfo[] = [
         text: "Opt-in: a git post-commit hook prints one line every few commits suggesting /viva on what you just committed. It never blocks a commit, logs nothing and never touches the network. Install it from the viva-skills repo with scripts/install-hook.sh; VIVA_REMIND=off silences it.",
       },
       {
+        name: "Options to compare",
+        text: "Off by default. Decision questions ask why the change took this approach, what must stay true, and what breaks if it is wrong. Risk tiers skip low-risk changes unless you ask, and offer a second question on high-risk ones. Neither has evidence behind it yet, so each check records which it used, for Viva’s experiment 8.",
+      },
+      {
         name: "How the change was made",
         text: "It records whether you wrote the change by hand, asked AI why, generated then understood it, delegated it, or an agent built it, so the map can show whether that tracks your understanding.",
       },

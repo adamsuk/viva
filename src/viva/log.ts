@@ -5,10 +5,14 @@ import {
   AI_USE_VALUES,
   BOT_CLAIM_VALUES,
   LOG_SCHEMAS,
+  RISK_VALUES,
+  STYLE_VALUES,
   schemaFor,
   type AiUse,
   type BotClaim,
   type LogSchema,
+  type QuestionStyle,
+  type RiskTier,
 } from "./log-schemas.ts";
 
 export interface VivaEntry {
@@ -28,6 +32,10 @@ export interface VivaEntry {
   botClaim: BotClaim;
   /** For a review-comment check, which bot made the comment (schema 0.6+); `unknown` before 0.6, `n/a` for other scopes. */
   bot: string;
+  /** Which kind of question was asked (schema 0.7+). `scenario` for older lines, which all were. */
+  style: QuestionStyle;
+  /** The change's risk tier when risk tiers were on (schema 0.7+). `n/a` when off and for older lines. */
+  risk: RiskTier;
   raw: string;
   schemaVersion: string;
 }
@@ -123,6 +131,8 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
     botClaim:
       get("scope").toLowerCase() === "review-comment" ? readBotClaim(get("botClaim")) : "n/a",
     bot: get("scope").toLowerCase() === "review-comment" ? readBot(get("bot")) : "n/a",
+    style: readStyle(get("style")),
+    risk: readRisk(get("risk")),
     raw: line,
     schemaVersion: schema.version,
   };
@@ -131,6 +141,16 @@ function parseWithSchema(line: string, schema: LogSchema): VivaEntry | null {
 function readAiUse(value: string): AiUse {
   const v = value.trim().toLowerCase();
   return (AI_USE_VALUES as readonly string[]).includes(v) ? (v as AiUse) : "unknown";
+}
+
+function readStyle(value: string): QuestionStyle {
+  const v = value.trim().toLowerCase();
+  return (STYLE_VALUES as readonly string[]).includes(v) ? (v as QuestionStyle) : "scenario";
+}
+
+function readRisk(value: string): RiskTier {
+  const v = value.trim().toLowerCase();
+  return (RISK_VALUES as readonly string[]).includes(v) ? (v as RiskTier) : "n/a";
 }
 
 function readBotClaim(value: string): BotClaim {
@@ -200,6 +220,45 @@ export function byAiUse(entries: VivaEntry[]): AiUseRow[] {
     }
     return row;
   }).filter((r) => r.total > 0);
+}
+
+export interface GradeRow<K extends string> {
+  key: K;
+  understood: number;
+  partial: number;
+  missed: number;
+  total: number;
+}
+
+/** Grades split by one field, in the order given, for the values that have checks. */
+function gradesBy<K extends string>(
+  entries: VivaEntry[],
+  keys: readonly K[],
+  field: (e: VivaEntry) => K,
+): GradeRow<K>[] {
+  return keys
+    .map((key) => {
+      const row: GradeRow<K> = { key, understood: 0, partial: 0, missed: 0, total: 0 };
+      for (const e of entries) {
+        const kind = gradeKind(e.grade);
+        if (field(e) !== key) continue;
+        if (kind !== "understood" && kind !== "partial" && kind !== "missed") continue;
+        row[kind]++;
+        row.total++;
+      }
+      return row;
+    })
+    .filter((r) => r.total > 0);
+}
+
+/** Grades by question style: scenario or decision. */
+export function byStyle(entries: VivaEntry[]): GradeRow<QuestionStyle>[] {
+  return gradesBy(entries, STYLE_VALUES, (e) => e.style);
+}
+
+/** Grades by risk tier, for checks made with risk tiers on. */
+export function byRisk(entries: VivaEntry[]): GradeRow<RiskTier>[] {
+  return gradesBy(entries, RISK_VALUES, (e) => e.risk).filter((r) => r.key !== "n/a");
 }
 
 export function gradeKind(grade: string): GradeKind {
@@ -329,6 +388,25 @@ export function summaryMarkdown(entries: VivaEntry[]): string {
       "| How the change was made | Understood | Partial | Missed |",
       "|---|---|---|---|",
       ...aiRows.map((r) => `| ${r.aiUse} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+    );
+  }
+  // Only when the user has tried the options: a log of default checks shows no extra tables.
+  const styleRows = byStyle(counted);
+  if (styleRows.some((r) => r.key !== "scenario")) {
+    lines.push(
+      "",
+      "| Question style | Understood | Partial | Missed |",
+      "|---|---|---|---|",
+      ...styleRows.map((r) => `| ${r.key} | ${r.understood} | ${r.partial} | ${r.missed} |`),
+    );
+  }
+  const riskRows = byRisk(counted);
+  if (riskRows.length) {
+    lines.push(
+      "",
+      "| Risk tier | Understood | Partial | Missed |",
+      "|---|---|---|---|",
+      ...riskRows.map((r) => `| ${r.key} | ${r.understood} | ${r.partial} | ${r.missed} |`),
     );
   }
   return lines.join("\n");
