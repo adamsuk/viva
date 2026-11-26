@@ -38,8 +38,8 @@ export const HOMEPAGE = {
   headline: "If you post it or merge it, you can defend it.",
   thesis:
     "AI makes code cheap to produce and easy to approve. Understanding is still the job. One small question after an AI-assisted change checks it, and many small answers show a person where their understanding is solid and where it is thin.",
-  why: "A viva is an oral exam where you defend your own work. Nobody fails a viva for using a library. They fail for not being able to explain what they wrote. The evidence says AI can leave people unable to explain code they shipped, and that review bots and tired reviewers wave it through. Walk one pull request to see where a question fits. Then audit your own team.",
-  walk: "Follow one AI-assisted PR, #212, through eight stations and see where it gets sent back.",
+  why: "A viva is an oral exam where you defend your own work. Nobody fails a viva for using a library. They fail for not being able to explain what they wrote. The evidence says AI can leave people unable to explain code they shipped, and that review bots and tired reviewers wave it through. Then audit your own team.",
+  walk: "A worked example: follow one AI-assisted PR, #212, through eight stations and see where it gets sent back.",
   audit:
     "Answer a few questions per station and see where your team checks understanding, and where it only checks code.",
 };

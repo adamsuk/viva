@@ -39,13 +39,15 @@ export function VivaApp() {
                 GitHub
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
-              <button
-                type="button"
-                onClick={reset}
-                className="min-h-11 shrink-0 px-2 font-medium text-accent underline-offset-4 hover:underline"
-              >
-                Start over
-              </button>
+              {view === "walk" ? (
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="min-h-11 shrink-0 px-2 font-medium text-accent underline-offset-4 hover:underline"
+                >
+                  Start over
+                </button>
+              ) : null}
             </div>
           </div>
           <div className="grid gap-3 py-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-end sm:gap-8">
@@ -53,20 +55,24 @@ export function VivaApp() {
               Viva<span className="text-margin">.</span>
             </h1>
             <p className="max-w-2xl text-sm text-muted sm:pb-1 sm:text-base">
-              Research notes and a guide on AI in code review, what it does to juniors and seniors,
-              and how to check that people understand what they post and merge. One pull request,
-              eight stations, every claim graded by the strength of its evidence.
+              Two agent skills, viva and viva-assess, that check you can defend what you post or
+              merge, a private map of the result on your own machine, and research notes on AI in
+              code review with every claim graded by the strength of its evidence.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <nav aria-label="Views" className="-mb-0.5 flex gap-4 sm:gap-6">
               <Tab label="Home" active={view === "home"} onClick={() => setView("home")} />
-              <Tab label="Walk the PR" active={view === "walk"} onClick={() => setView("walk")} />
-              <Tab label="The guide" active={view === "guide"} onClick={() => setView("guide")} />
-              <Tab label="Personal map" active={view === "map"} onClick={() => setView("map")} />
               <Tab label="Skills" active={view === "skills"} onClick={() => setView("skills")} />
+              <Tab label="Personal map" active={view === "map"} onClick={() => setView("map")} />
+              <Tab label="The guide" active={view === "guide"} onClick={() => setView("guide")} />
+              <Tab
+                label="Worked example"
+                active={view === "walk"}
+                onClick={() => setView("walk")}
+              />
             </nav>
-            <Progress count={count} />
+            {view === "walk" ? <Progress count={count} /> : null}
           </div>
         </div>
       </header>
