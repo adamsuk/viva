@@ -20,7 +20,7 @@
 | # | Experiment | Status | Result |
 |---|---|---|---|
 | 1 | For 20 of my own merged PRs, generate one scenario question each. Rate how often I had to think rather than recall. Run it with “/viva practice” (viva skill 0.6.2+); viva-assess summarises the ratings. | Planned |  |
-| 2 | Answer the same 20 with and without an AI open. Compare. | Planned |  |
+| 2 | Answer the same 20 with and without an AI open. Compare. Run the second pass with “/viva practice with-ai” (viva skill 0.7.2+): a new question on each PR already practised, answered with your usual AI open elsewhere. It goes only to the experiment file, never the log, and viva-assess pairs the two passes. The unaided pass always comes first, so some of any rise is from having seen the PR before. | Planned |  |
 | 3 | Compare answers with and without a confidence rating. Does confidence separate guesses from knowledge? | Planned |  |
 | 4 | Run on a small team, private output only, for two weeks. Ask what felt useful or intrusive. | Planned |  |
 | 5 | Ask reviewers who forward bot comments one question about each. How often can they defend it? | Planned |  |

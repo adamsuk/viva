@@ -2241,7 +2241,7 @@ export const EXPERIMENTS: { id: number; text: string; status: ExperimentStatus; 
     },
     {
       id: 2,
-      text: "Answer the same 20 with and without an AI open. Compare.",
+      text: "Answer the same 20 with and without an AI open. Compare. Run the second pass with “/viva practice with-ai” (viva skill 0.7.2+): a new question on each PR already practised, answered with your usual AI open elsewhere. It goes only to the experiment file, never the log, and viva-assess pairs the two passes. The unaided pass always comes first, so some of any rise is from having seen the PR before.",
       status: "Planned",
       result: "",
     },
