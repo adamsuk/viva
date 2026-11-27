@@ -53,7 +53,7 @@ A local-first personal view that sits on top of the existing skill log, plus a s
 | viva-assess skill for batch interpretation | Yes | |
 | MCP note / Skills-over-MCP path | Yes | |
 | Zero-account, local-first | Yes | |
-| Auto-trigger after commit | | Later (git hook or agent reminder) |
+| Reminder after commit (opt-in git hook, viva-skills `scripts/install-hook.sh`) | Yes | Prints a suggestion every few commits; never runs a check by itself |
 | Browser extension / GitHub button | | Later |
 | Topic taxonomy / auto-tagging | | Later (start with free-text topics from log) |
 | Team / shared views | | Never for MVP (privacy) |

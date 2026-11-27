@@ -52,3 +52,12 @@ test("the Skills page offers practice mode for experiment 1", () => {
   assert.match(card.text, /\/viva practice/);
   assert.match(card.text, /experiment 1/);
 });
+
+test("the Skills page offers the opt-in post-commit reminder", () => {
+  const viva = SKILLS.find((s) => s.name === "viva")!;
+  const card = viva.features.find((f) => f.name === "Reminder after commits");
+  assert.ok(card);
+  assert.match(card.text, /opt-in/i);
+  assert.match(card.text, /install-hook\.sh/);
+  assert.match(card.text, /never blocks a commit/);
+});
