@@ -8,7 +8,7 @@ Research-driven entries say what changed, why, and which sources back it. See [C
 
 ### Changed
 
-- Experiment 2 in EXPERIMENTS.md says how to run it: `/viva practice with-ai` (viva skill 0.7.2+) asks a new question on each PR already practised, answered with your usual AI open in another window. The Skills page's Practice mode entry lists it too. The answers go only to the experiment file, never the log, so the personal map and the log schemas are unchanged. Why: the experiment had no way to run, and AI-assisted answers in the log would make the map show understanding the user may not have ([adamsuk/viva-skills#41](https://github.com/adamsuk/viva-skills/pull/41), PR link to follow).
+- Experiment 2 in EXPERIMENTS.md says how to run it: `/viva practice with-ai` (viva skill 0.7.2+) asks a new question on each PR already practised, answered with your usual AI open in another window. The Skills page's Practice mode entry lists it too. The answers go only to the experiment file, never the log, so the personal map and the log schemas are unchanged. Why: the experiment had no way to run, and AI-assisted answers in the log would make the map show understanding the user may not have ([adamsuk/viva-skills#41](https://github.com/adamsuk/viva-skills/pull/41), [#43](https://github.com/adamsuk/viva/pull/43)).
 
 ## 2026-11-26
 
