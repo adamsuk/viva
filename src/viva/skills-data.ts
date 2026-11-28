@@ -44,7 +44,7 @@ export const SKILLS: SkillInfo[] = [
       },
       {
         name: "Practice mode",
-        text: "Say /viva practice to work through your own past merged PRs, one question each, and note whether you had to think or just recalled. That rating stays in a separate file on your device, for Viva’s experiment 1.",
+        text: "Say /viva practice to work through your own past merged PRs, one question each, and note whether you had to think or just recalled. That rating stays in a separate file on your device, for Viva’s experiment 1. Then /viva practice with-ai asks a new question on the same PRs while you use your usual AI in another window, for experiment 2. Those answers go only to that file, never the log, so the map shows only your own.",
       },
       {
         name: "Reminder after commits",
